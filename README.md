@@ -36,13 +36,12 @@ npm ci --ignore-scripts --offline
 npm run shared:test
 npm run shared:check
 npm run packages:sources
-python3 scripts/materialize-product-manifest.py --profile sample-neutral --check
 ```
 
 The Python runtime wheel is also built without an index:
 
 ```bash
-python3 scripts/check_runtime_wheel.py
+npm run runtime-py:wheel
 ```
 
 Checks and publication are local owner operations; this repository contains no

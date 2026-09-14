@@ -734,7 +734,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "command",
-        choices=("generate", "check", "release-generate", "license-final-check"),
+        choices=(
+            "generate",
+            "check",
+            "package-check",
+            "release-generate",
+            "license-final-check",
+        ),
     )
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--output", type=Path)
@@ -749,7 +755,7 @@ def main(argv: list[str] | None = None) -> int:
             root,
             args.output,
             DEFAULT_OUTPUT
-            if args.command in {"generate", "check", "license-final-check"}
+            if args.command in {"generate", "check", "package-check", "license-final-check"}
             else None,
         )
         if args.command == "release-generate":
@@ -770,6 +776,13 @@ def main(argv: list[str] | None = None) -> int:
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(canonical_json(document, pretty=True), encoding="utf-8")
             print(f"wrote release-attested SBOM: {output}")
+            return 0
+        if args.command == "package-check":
+            _, workspace_packages, graph, _ = validate_repository(root, policy_path)
+            print(
+                f"local package integrity passed "
+                f"({len(workspace_packages)} packages, {sum(map(len, graph.values()))} dependencies)"
+            )
             return 0
         if args.command == "generate":
             policy = load_policy(root, policy_path)
