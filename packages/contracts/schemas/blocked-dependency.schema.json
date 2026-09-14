@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight-agent-harness.local/schemas/blocked-dependency.schema.json",
+  "title": "BlockedDependency",
+  "description": "A typed dependency failure that can be exchanged without exposing raw resource values.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "dependency_id",
+    "kind",
+    "ref",
+    "reason_code",
+    "message",
+    "retryable"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "dependency_id": {
+      "type": "string",
+      "pattern": "^dep_[a-z0-9][a-z0-9_-]{2,63}$"
+    },
+    "kind": {
+      "enum": [
+        "capability",
+        "resource",
+        "authorization",
+        "policy",
+        "adapter",
+        "signing_key",
+        "kill_switch",
+        "egress"
+      ]
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 320,
+      "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+    },
+    "reason_code": {
+      "enum": [
+        "missing",
+        "unavailable",
+        "unauthorized",
+        "disabled",
+        "invalid_configuration"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "retryable": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

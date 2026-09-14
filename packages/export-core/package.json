@@ -1,0 +1,25 @@
+{
+  "name": "@insight-agent-harness/export-core",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Canonical, authorized, deterministic exports for Insight Agent artifacts",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "dependencies": {
+    "@insight-agent-harness/contracts": "file:../contracts"
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check tests/node/export-core.test.mjs",
+    "test": "npm run check && node --test tests/node/*.test.mjs"
+  }
+}

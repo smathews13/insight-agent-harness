@@ -1,0 +1,337 @@
+{
+  "schema_version": "1.0.0",
+  "valid_neutral_manifest": {
+    "schema_version": "1.0.0",
+    "product": {
+      "id": "neutral-insight-agent",
+      "display_name": "Neutral Insight Agent",
+      "version": "1.1.0",
+      "description": "Answers governed analytical questions with evidence."
+    },
+    "presentation": {
+      "title": "Insights",
+      "theme": "system",
+      "icon_uri": "asset://icons/neutral-agent.svg"
+    },
+    "extensions": {
+      "branding": "extension:branding/sample-neutral",
+      "navigation": "extension:navigation/sample-neutral",
+      "loading": "extension:loading/sample-neutral",
+      "prompts": "extension:prompts/sample-neutral",
+      "knowledge": "extension:knowledge/sample-neutral",
+      "tool_registry": "extension:tools/sample-neutral",
+      "genie_mode": "extension:genie/sample-neutral",
+      "resources": "extension:resources/sample-neutral",
+      "migrations": "extension:migrations/sample-neutral",
+      "settings": "extension:settings/sample-neutral",
+      "export_chrome": "extension:export/sample-neutral"
+    },
+    "capabilities": {
+      "items": [
+        {
+          "id": "query_evidence",
+          "kind": "genie_query",
+          "enabled": true,
+          "dependencies": []
+        },
+        {
+          "id": "answer",
+          "kind": "answer",
+          "enabled": true,
+          "dependencies": ["query_evidence"]
+        }
+      ]
+    },
+    "knowledge": {
+      "source_refs": ["knowledge:neutral-guidance"],
+      "prompt_pack_refs": ["prompt:neutral-assistant"]
+    },
+    "tools": {
+      "registry_refs": ["tool-registry:governed-default"],
+      "enabled_tool_ids": ["query_evidence"]
+    },
+    "genie": {
+      "mode": "genie_only",
+      "allow_agent_authored_sql": false,
+      "space_refs": ["genie:primary-space"],
+      "required_space_roles": ["primary"]
+    },
+    "resources": {
+      "bindings": [
+        {
+          "name": "primary_genie",
+          "kind": "genie_space",
+          "ref": "resource:genie-primary"
+        },
+        {
+          "name": "application_state",
+          "kind": "lakebase_database",
+          "ref": "resource:lakebase-state"
+        },
+        {
+          "name": "application",
+          "kind": "databricks_app",
+          "ref": "resource:insight-app"
+        }
+      ],
+      "bundle_target": "sample_neutral",
+      "generated_name_prefix": "neutral_insight"
+    },
+    "settings": {
+      "defaults_ref": "settings:sample-neutral",
+      "runtime_editable_keys": ["appearance.color_scheme", "appearance.density"]
+    },
+    "authorization": {
+      "default_mode": "user_authorization",
+      "supported_modes": ["user_authorization"],
+      "user_scopes": ["sql"],
+      "evidence_tools": [
+        {
+          "capability_id": "query_evidence",
+          "auth_mode": "user_authorization"
+        }
+      ]
+    },
+    "collaboration": {
+      "team_authority": "account_scim_read_only",
+      "project_roles": [
+        "owner",
+        "editor",
+        "contributor",
+        "viewer",
+        "auditor"
+      ],
+      "membership_sources": [
+        "direct_user",
+        "account_scim_team"
+      ],
+      "project_context_policy_ref": "policy:project-context",
+      "snapshot_targets": [
+        "run",
+        "artifact"
+      ]
+    },
+    "data_boundary": {
+      "boundary_policy_ref": "policy:default-boundary",
+      "permitted_dataset_refs": ["dataset:approved-metrics"]
+    },
+    "operations": {
+      "readiness_policy": "strict_persistent_analytics",
+      "limits": {
+        "max_run_seconds": 300,
+        "max_tool_calls": 32,
+        "max_steps": 24,
+        "max_output_bytes": 1048576
+      },
+      "budget": {
+        "mode": "reporting_only",
+        "reporting_policy_ref": "policy:budget-reporting"
+      },
+      "freshness_policy_refs": [
+        "policy:answer-freshness",
+        "policy:evidence-freshness"
+      ],
+      "retention_policy_ref": "policy:default-retention",
+      "kill_switch_refs": ["control:global-stop", "control:export-stop"],
+      "mcp": {
+        "enabled": false,
+        "direct_fallback_mode": "same_user_audited"
+      }
+    },
+    "exports": {
+      "external_enabled": false,
+      "formats": ["markdown", "html", "pdf", "json", "csv", "tsv", "xlsx", "png"],
+      "adapter_refs": [],
+      "chrome_ref": "export-chrome:sample-neutral",
+      "document_title": "Insight Agent answer"
+    },
+    "compatibility": {
+      "minimum_platform_version": "1.0.0",
+      "registry_ref": "compatibility:environment-aliases-v1.1",
+      "aliases": [
+        {
+          "alias": "LEGACY_PRODUCT_CATALOG",
+          "target": "INSIGHT_AGENT_CATALOG",
+          "owner": "platform-contracts",
+          "telemetry_key": "compat.player_insights.catalog",
+          "removal_version": "1.2.0"
+        }
+      ]
+    }
+  },
+  "invalid_privileged_runtime_change": {
+    "schema_version": "1.0.0",
+    "before_fixture": "valid_neutral_manifest",
+    "replace": {
+      "section": "data_boundary",
+      "value": {
+        "boundary_policy_ref": "policy:expanded-boundary",
+        "permitted_dataset_refs": ["dataset:expanded-metrics"]
+      }
+    }
+  },
+  "user_auth_request": {
+    "schema_version": "1.0.0",
+    "request_id": "req_neutral_001",
+    "correlation_id": "corr_neutral_001",
+    "requested_at": "2026-01-15T12:00:00Z",
+    "authorization": {
+      "mode": "user_authorization",
+      "subject_ref": "principal:requesting-user",
+      "scopes": ["sql"]
+    },
+    "requested_capability": "answer",
+    "input": {
+      "prompt": "Summarize the approved neutral metric."
+    }
+  },
+  "evidence": {
+    "schema_version": "1.0.0",
+    "evidence_id": "ev_neutral_001",
+    "source_kind": "genie_query",
+    "source_ref": "query:neutral-result-001",
+    "retrieved_at": "2026-01-15T12:00:01Z",
+    "excerpt": "The approved metric is 42."
+  },
+  "complete_run": {
+    "schema_version": "1.0.0",
+    "run_id": "run_neutral_001",
+    "request_id": "req_neutral_001",
+    "status": "complete",
+    "started_at": "2026-01-15T12:00:00Z",
+    "completed_at": "2026-01-15T12:00:02Z",
+    "output": {
+      "summary": "The approved metric is 42.",
+      "content_blocks": [
+        {
+          "block_id": "block_metric_001",
+          "kind": "quantitative",
+          "content": "Approved metric: 42",
+          "evidence_refs": ["ev_neutral_001"]
+        }
+      ]
+    },
+    "evidence": [
+      {
+        "schema_version": "1.0.0",
+        "evidence_id": "ev_neutral_001",
+        "source_kind": "genie_query",
+        "source_ref": "query:neutral-result-001",
+        "retrieved_at": "2026-01-15T12:00:01Z",
+        "excerpt": "The approved metric is 42."
+      }
+    ]
+  },
+  "blocked_dependency": {
+    "schema_version": "1.0.0",
+    "dependency_id": "dep_policy_001",
+    "kind": "policy",
+    "ref": "policy:required-evidence",
+    "reason_code": "unavailable",
+    "message": "The required evidence policy is unavailable.",
+    "retryable": true
+  },
+  "error_envelope": {
+    "schema_version": "1.0.0",
+    "code": "blocked_dependency",
+    "message": "The run cannot continue until the required policy is available.",
+    "retryable": true,
+    "correlation_id": "corr_neutral_001",
+    "blocked_dependency": {
+      "schema_version": "1.0.0",
+      "dependency_id": "dep_policy_001",
+      "kind": "policy",
+      "ref": "policy:required-evidence",
+      "reason_code": "unavailable",
+      "message": "The required evidence policy is unavailable.",
+      "retryable": true
+    }
+  },
+  "blocked_run": {
+    "schema_version": "1.0.0",
+    "run_id": "run_neutral_002",
+    "request_id": "req_neutral_001",
+    "status": "blocked",
+    "started_at": "2026-01-15T12:01:00Z",
+    "completed_at": "2026-01-15T12:01:01Z",
+    "blocked_dependencies": [
+      {
+        "schema_version": "1.0.0",
+        "dependency_id": "dep_policy_001",
+        "kind": "policy",
+        "ref": "policy:required-evidence",
+        "reason_code": "unavailable",
+        "message": "The required evidence policy is unavailable.",
+        "retryable": true
+      }
+    ]
+  },
+  "audit_event": {
+    "schema_version": "1.0.0",
+    "event_id": "audit_neutral_001",
+    "event_type": "run_completed",
+    "occurred_at": "2026-01-15T12:00:02Z",
+    "actor": {
+      "mode": "user_authorization",
+      "subject_ref": "principal:requesting-user"
+    },
+    "action": "run.complete",
+    "target_ref": "run:neutral-001",
+    "outcome": "succeeded",
+    "correlation_id": "corr_neutral_001",
+    "details": {
+      "evidence_count": 1
+    }
+  },
+  "legacy_forward_compatible_wire": {
+    "schema_version": "1.0.0",
+    "evidence_id": "ev_legacy_001",
+    "source_kind": "document",
+    "source_ref": "document:legacy-neutral-001",
+    "retrieved_at": "2026-01-15T12:00:01Z",
+    "legacy_source_label": "Preserved unknown wire field",
+    "future_extension": {
+      "revision": 2
+    }
+  },
+  "quantitative_without_evidence": {
+    "schema_version": "1.0.0",
+    "run_id": "run_neutral_003",
+    "request_id": "req_neutral_001",
+    "status": "complete",
+    "started_at": "2026-01-15T12:02:00Z",
+    "completed_at": "2026-01-15T12:02:01Z",
+    "output": {
+      "summary": "The approved metric is 42.",
+      "content_blocks": [
+        {
+          "block_id": "block_metric_002",
+          "kind": "quantitative",
+          "content": "Approved metric: 42",
+          "evidence_refs": []
+        }
+      ]
+    },
+    "evidence": [
+      {
+        "schema_version": "1.0.0",
+        "evidence_id": "ev_neutral_001",
+        "source_kind": "genie_query",
+        "source_ref": "query:neutral-result-001",
+        "retrieved_at": "2026-01-15T12:00:01Z"
+      }
+    ]
+  },
+  "legacy_alias_manifest": {
+    "schema_version": "1.0.0",
+    "base_fixture": "valid_neutral_manifest",
+    "alias": {
+      "alias": "historical_product_name",
+      "target": "LEGACY_PRODUCT_LEGACY_NAME",
+      "owner": "platform-contracts",
+      "telemetry_key": "compat.historical_product_name",
+      "removal_version": "1.2.0",
+      "legacy_fixture": true
+    }
+  }
+}

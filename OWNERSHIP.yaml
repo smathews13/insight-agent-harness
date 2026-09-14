@@ -1,0 +1,371 @@
+{
+  "schema_version": "1.0",
+  "repository_role": "upstream",
+  "neutral_profile_paths": [
+    "profiles"
+  ],
+  "neutral_profile_customer_keys": [
+    "account_id",
+    "customer",
+    "customer_id",
+    "customer_name",
+    "workspace_host",
+    "workspace_id",
+    "workspace_url"
+  ],
+  "paths": [
+    {
+      "path": "platform/app",
+      "owner": {"area": "neutral application", "team": "platform-app"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "extensions/sample-neutral/agent",
+        "packages/contracts",
+        "packages/export-core",
+        "packages/governance",
+        "packages/lakebase",
+        "packages/observability"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "platform/app/server/generated",
+      "owner": {"area": "generated app ProductManifest binding", "team": "platform-contracts"},
+      "classification": ["generated", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts",
+        "profiles"
+      ],
+      "customer_values_allowed": false,
+      "generated_output": true,
+      "generated_source_hash": {
+        "metadata_file": "product-manifest.ts",
+        "pattern": "PRODUCT_MANIFEST_SOURCE_SHA256 = \"[0-9a-f]{64}\""
+      }
+    },
+    {
+      "path": "platform/app/client/src/generated",
+      "owner": {"area": "generated browser-safe ProductManifest binding", "team": "platform-contracts"},
+      "classification": ["generated", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts",
+        "profiles"
+      ],
+      "customer_values_allowed": false,
+      "generated_output": true,
+      "generated_source_hash": {
+        "metadata_file": "product-manifest.ts",
+        "pattern": "\"sourceSha256\":\"[0-9a-f]{64}\""
+      }
+    },
+    {
+      "path": "platform/agent",
+      "owner": {"area": "neutral agent composition", "team": "platform-agent"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "extensions/sample-neutral/agent",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/governance",
+        "packages/observability"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "extensions/sample-neutral/agent",
+      "owner": {"area": "manifest-bound compatibility agent implementation", "team": "distribution-compatibility"},
+      "classification": ["upstream-owned", "excluded"],
+      "allowed_dependency_targets": [
+        "platform/agent",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/governance",
+        "packages/observability"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "platform/scripts",
+      "owner": {"area": "local build and validation tooling", "team": "platform-tooling"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts",
+        "packages/governance"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "platform/tests",
+      "owner": {"area": "platform integration tests", "team": "platform-quality"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "platform/app",
+        "platform/agent",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/export-core",
+        "packages/governance",
+        "packages/lakebase",
+        "packages/observability",
+        "profiles",
+        "resources"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/contracts",
+      "owner": {"area": "wire contracts and generated types", "team": "platform-contracts"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/export-core",
+      "owner": {"area": "canonical artifacts and deterministic exports", "team": "platform-exports"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/slack-boundary",
+      "owner": {"area": "Slack link-out contracts and product boundary", "team": "platform-integrations"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/export-core",
+        "packages/observability"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/governance",
+      "owner": {"area": "identity policy and redaction", "team": "platform-governance"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/lakebase",
+      "owner": {"area": "generic persistence helpers", "team": "platform-storage"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/observability",
+      "owner": {"area": "tracing audit and correlation", "team": "platform-observability"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts",
+        "packages/governance"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/agent-runtime-py",
+      "owner": {"area": "provider tool and evidence runtime interfaces", "team": "platform-agent-runtime"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "packages/external-intelligence-py",
+      "owner": {"area": "governed external evidence ingestion", "team": "platform-governance"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "agent/eval",
+      "owner": {"area": "neutral evaluations and scorers", "team": "agent-quality"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/governance",
+        "packages/observability",
+        "profiles"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "agent/tests",
+      "owner": {"area": "neutral model and runtime tests", "team": "agent-quality"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "agent/eval",
+        "extensions/sample-neutral/agent",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/governance",
+        "packages/observability",
+        "platform/agent",
+        "profiles"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "platform/agent/generated",
+      "owner": {"area": "generated agent ProductManifest binding", "team": "platform-contracts"},
+      "classification": ["generated", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts",
+        "profiles"
+      ],
+      "customer_values_allowed": false,
+      "generated_output": true,
+      "generated_source_hash": {
+        "metadata_file": "product_manifest.py",
+        "pattern": "PRODUCT_MANIFEST_SOURCE_SHA256 = \"[0-9a-f]{64}\""
+      }
+    },
+    {
+      "path": "bundle",
+      "owner": {"area": "deployment declarations and release entrypoints", "team": "release-engineering"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "extensions/sample-neutral/agent",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/export-core",
+        "packages/governance",
+        "packages/lakebase",
+        "packages/observability",
+        "platform/app",
+        "platform/agent",
+        "profiles",
+        "resources"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "resources",
+      "owner": {"area": "neutral resource templates and schemas", "team": "release-engineering"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/external-intelligence-py",
+        "profiles"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "profiles",
+      "owner": {"area": "customer-neutral product profiles", "team": "platform-governance"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/contracts"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "mirror",
+      "owner": {"area": "derived public publication", "team": "supply-chain"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "bundle",
+        "docs",
+        "resources"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": ".github",
+      "owner": {"area": "repository metadata with workflows prohibited", "team": "supply-chain"},
+      "classification": ["upstream-owned", "excluded"],
+      "allowed_dependency_targets": [
+        "mirror",
+        "scripts"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "sync-mirror.sh",
+      "owner": {"area": "local derived publication entrypoint", "team": "supply-chain"},
+      "classification": ["upstream-owned", "excluded"],
+      "allowed_dependency_targets": [
+        "mirror",
+        "scripts"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "docs",
+      "owner": {"area": "architecture operations and internal handoffs", "team": "platform-maintainers"},
+      "classification": ["upstream-owned", "excluded"],
+      "allowed_dependency_targets": [
+        "agent/eval",
+        "bundle",
+        "mirror",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/export-core",
+        "packages/governance",
+        "packages/lakebase",
+        "packages/observability",
+        "platform/app",
+        "platform/agent",
+        "profiles",
+        "resources"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "overlays",
+      "owner": {"area": "downstream product customization", "team": "downstream-distribution-owners"},
+      "classification": ["overlay-owned", "excluded"],
+      "allowed_dependency_targets": [
+        "agent/eval",
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/export-core",
+        "packages/governance",
+        "packages/lakebase",
+        "packages/observability",
+        "platform/app",
+        "platform/agent",
+        "profiles",
+        "resources"
+      ],
+      "customer_values_allowed": true
+    },
+    {
+      "path": "scripts",
+      "owner": {"area": "pre-migration repository validation", "team": "platform-tooling"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "packages/agent-runtime-py",
+        "packages/contracts",
+        "packages/export-core",
+        "packages/governance",
+        "packages/lakebase",
+        "packages/observability",
+        "profiles"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "security",
+      "owner": {"area": "security gate policy and evidence adapters", "team": "release-engineering"},
+      "classification": ["upstream-owned", "public-safe"],
+      "allowed_dependency_targets": [
+        "scripts"
+      ],
+      "customer_values_allowed": false
+    },
+    {
+      "path": "platform/app/build/deploy",
+      "owner": {"area": "generated Databricks App deploy tree", "team": "release-engineering"},
+      "classification": ["generated", "excluded"],
+      "allowed_dependency_targets": [],
+      "customer_values_allowed": false,
+      "generated_deploy_output": true,
+      "generated_source_hash": {
+        "metadata_file": "app.yaml",
+        "pattern": "LEGACY_PRODUCT_BUILD_SHA[\\s\\S]{0,120}value:\\s*'[0-9a-f]{40}'"
+      }
+    }
+  ]
+}

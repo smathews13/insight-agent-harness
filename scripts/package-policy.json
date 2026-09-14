@@ -1,0 +1,53 @@
+{
+  "forbidden_license_identifiers": [
+    "AGPL-1.0-only",
+    "AGPL-1.0-or-later",
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later",
+    "BUSL-1.1",
+    "SSPL-1.0"
+  ],
+  "reviewed_license_identifiers": [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BlueOak-1.0.0",
+    "CC-BY-3.0",
+    "CC-BY-4.0",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "MIT-0",
+    "MPL-2.0",
+    "Python-2.0",
+    "Unlicense",
+    "Zlib"
+  ],
+  "workspace_packages": [
+    {
+      "name": "@insight-agent-harness/contracts",
+      "path": "packages/contracts"
+    },
+    {
+      "name": "@insight-agent-harness/governance",
+      "path": "packages/governance"
+    },
+    {
+      "name": "@insight-agent-harness/observability",
+      "path": "packages/observability"
+    },
+    {
+      "name": "@insight-agent-harness/lakebase",
+      "path": "packages/lakebase"
+    },
+    {
+      "name": "@insight-agent-harness/export-core",
+      "path": "packages/export-core"
+    },
+    {
+      "name": "@insight-agent-harness/slack-boundary",
+      "path": "packages/slack-boundary"
+    }
+  ]
+}

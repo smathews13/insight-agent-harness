@@ -1,0 +1,159 @@
+{
+  "schema_version": "1.0.0",
+  "product": {
+    "id": "neutral-insight-agent",
+    "display_name": "Neutral Insight Agent",
+    "version": "1.1.0",
+    "description": "Answers governed analytical questions with evidence."
+  },
+  "presentation": {
+    "title": "Insights",
+    "theme": "system",
+    "icon_uri": "asset://icons/neutral-agent.svg"
+  },
+  "extensions": {
+    "branding": "extension:branding/sample-neutral",
+    "navigation": "extension:navigation/sample-neutral",
+    "loading": "extension:loading/sample-neutral",
+    "prompts": "extension:prompts/sample-neutral",
+    "knowledge": "extension:knowledge/sample-neutral",
+    "tool_registry": "extension:tools/sample-neutral",
+    "genie_mode": "extension:genie/sample-neutral",
+    "resources": "extension:resources/sample-neutral",
+    "migrations": "extension:migrations/sample-neutral",
+    "settings": "extension:settings/sample-neutral",
+    "export_chrome": "extension:export/sample-neutral"
+  },
+  "capabilities": {
+    "items": [
+      {
+        "id": "query_evidence",
+        "kind": "genie_query",
+        "enabled": true,
+        "dependencies": []
+      },
+      {
+        "id": "answer",
+        "kind": "answer",
+        "enabled": true,
+        "dependencies": ["query_evidence"]
+      }
+    ]
+  },
+  "knowledge": {
+    "source_refs": ["knowledge:neutral-guidance"],
+    "prompt_pack_refs": ["prompt:neutral-assistant"]
+  },
+  "tools": {
+    "registry_refs": ["tool-registry:governed-default"],
+    "enabled_tool_ids": ["query_evidence"]
+  },
+  "genie": {
+    "mode": "genie_only",
+    "allow_agent_authored_sql": false,
+    "space_refs": ["genie:primary-space"],
+    "required_space_roles": ["primary"]
+  },
+  "resources": {
+    "bindings": [
+      {
+        "name": "primary_genie",
+        "kind": "genie_space",
+        "ref": "resource:genie-primary"
+      },
+      {
+        "name": "application_state",
+        "kind": "lakebase_database",
+        "ref": "resource:lakebase-state"
+      },
+      {
+        "name": "application",
+        "kind": "databricks_app",
+        "ref": "resource:insight-app"
+      }
+    ],
+    "bundle_target": "sample_neutral",
+    "generated_name_prefix": "neutral_insight"
+  },
+  "settings": {
+    "defaults_ref": "settings:sample-neutral",
+    "runtime_editable_keys": ["appearance.color_scheme", "appearance.density"]
+  },
+  "authorization": {
+    "default_mode": "user_authorization",
+    "supported_modes": ["user_authorization"],
+    "user_scopes": ["sql"],
+    "evidence_tools": [
+      {
+        "capability_id": "query_evidence",
+        "auth_mode": "user_authorization"
+      }
+    ]
+  },
+  "collaboration": {
+    "team_authority": "account_scim_read_only",
+    "project_roles": [
+      "owner",
+      "editor",
+      "contributor",
+      "viewer",
+      "auditor"
+    ],
+    "membership_sources": [
+      "direct_user",
+      "account_scim_team"
+    ],
+    "project_context_policy_ref": "policy:project-context",
+    "snapshot_targets": [
+      "run",
+      "artifact"
+    ]
+  },
+  "data_boundary": {
+    "boundary_policy_ref": "policy:default-boundary",
+    "permitted_dataset_refs": ["dataset:approved-metrics"]
+  },
+  "operations": {
+    "readiness_policy": "strict_persistent_analytics",
+    "limits": {
+      "max_run_seconds": 300,
+      "max_tool_calls": 32,
+      "max_steps": 24,
+      "max_output_bytes": 1048576
+    },
+    "budget": {
+      "mode": "reporting_only",
+      "reporting_policy_ref": "policy:budget-reporting"
+    },
+    "freshness_policy_refs": [
+      "policy:answer-freshness",
+      "policy:evidence-freshness"
+    ],
+    "retention_policy_ref": "policy:default-retention",
+    "kill_switch_refs": ["control:global-stop", "control:export-stop"],
+    "mcp": {
+      "enabled": false,
+      "direct_fallback_mode": "same_user_audited"
+    }
+  },
+  "exports": {
+    "external_enabled": false,
+    "formats": ["markdown", "html", "pdf", "json", "csv", "tsv", "xlsx", "png"],
+    "adapter_refs": [],
+    "chrome_ref": "export-chrome:sample-neutral",
+    "document_title": "Insight Agent answer"
+  },
+  "compatibility": {
+    "minimum_platform_version": "1.0.0",
+    "registry_ref": "compatibility:environment-aliases-v1.1",
+    "aliases": [
+      {
+        "alias": "LEGACY_PRODUCT_CATALOG",
+        "target": "INSIGHT_AGENT_CATALOG",
+        "owner": "platform-contracts",
+        "telemetry_key": "compat.player_insights.catalog",
+        "removal_version": "1.2.0"
+      }
+    ]
+  }
+}

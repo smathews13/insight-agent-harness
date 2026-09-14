@@ -1,0 +1,26 @@
+{
+  "name": "@insight-agent-harness/slack-boundary",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NO-GO Slack architecture contracts and authenticated web-app link-out boundary",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "dependencies": {
+    "@insight-agent-harness/export-core": "file:../export-core",
+    "@insight-agent-harness/observability": "file:../observability"
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check tests/node/slack-boundary.test.mjs",
+    "test": "npm run check && node --test tests/node/*.test.mjs"
+  }
+}

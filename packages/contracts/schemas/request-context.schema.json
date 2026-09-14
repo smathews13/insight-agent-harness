@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight-agent-harness.local/schemas/request-context.schema.json",
+  "title": "RequestContext",
+  "description": "Forward-compatible request metadata and caller authorization.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "request_id",
+    "correlation_id",
+    "requested_at",
+    "authorization",
+    "requested_capability",
+    "input"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^req_[a-z0-9][a-z0-9_-]{2,95}$"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-z0-9][a-z0-9_-]{2,95}$"
+    },
+    "requested_at": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$"
+    },
+    "authorization": {
+      "type": "object",
+      "required": [
+        "mode",
+        "subject_ref"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "user_authorization",
+            "explicit_service_principal"
+          ]
+        },
+        "subject_ref": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 320,
+          "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        },
+        "scopes": {
+          "type": "array",
+          "maxItems": 11,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "catalog.catalogs:read",
+              "catalog.schemas:read",
+              "catalog.tables:read",
+              "dashboards.genie",
+              "model-serving",
+              "postgres",
+              "serving.serving-endpoints",
+              "sql",
+              "vectorsearch.vector-search-endpoints:read",
+              "vectorsearch.vector-search-indexes:read",
+              "workspace.workspace:read"
+            ]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "requested_capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]{1,63}$"
+    },
+    "input": {
+      "type": "object",
+      "required": [
+        "prompt"
+      ],
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        },
+        "conversation_ref": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 320,
+          "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        },
+        "project_ref": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 320,
+          "pattern": "^project:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

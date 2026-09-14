@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight-agent-harness.local/schemas/evidence-ref.schema.json",
+  "title": "EvidenceRef",
+  "description": "A forward-compatible reference to evidence used by an exchanged answer.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "source_kind",
+    "source_ref",
+    "retrieved_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^ev_[a-z0-9][a-z0-9_-]{2,63}$"
+    },
+    "source_kind": {
+      "enum": [
+        "genie_query",
+        "tool_result",
+        "document",
+        "dataset"
+      ]
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 320,
+      "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+    },
+    "retrieved_at": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$"
+    },
+    "excerpt": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "attributes": {
+      "type": "object",
+      "maxProperties": 24,
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

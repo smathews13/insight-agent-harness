@@ -1,0 +1,96 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies
+node_modules/
+node_modules.partial-harness/
+.venv/
+__pycache__/
+*.pyc
+
+# Build output
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Exception: the app's dependency-free deploy tree is committed on purpose so the
+# app can be deployed straight from Git via the Databricks Apps UI (Source code
+# path = platform/app/build/deploy). It has no package.json, so the
+# platform skips npm install. See platform/app/.gitignore for the full
+# note. Rebuild with `npm run build:deploy` (in platform/app/) and
+# recommit to update it.
+!platform/app/build/
+platform/app/build/*
+!platform/app/build/deploy/
+!platform/app/build/deploy/**
+
+# Local MLflow state. mlflow.db holds traced prompts and answers.
+mlruns/
+mlflow.db
+
+# Rendered documents. The leak check cannot review a PDF, so it cannot clear one.
+docs/*.pdf
+
+# Design-handoff screenshots, for the same reason one step further on: a PNG can
+# neither be scanned by the leak check nor rewritten by publish-rewrite.pl, so
+# whatever is drawn in one is drawn in it permanently. The answer-card screen in
+# the astrolabe bundles renders the customer's own title roster into a chart, a
+# breakdown and a caveat list -- the exact strings mirror/publish-rewrite.pl
+# exists to replace in text -- and two others show a Databricks address inside a
+# GRANT and a signed-in username. Held out on 2026-08-17 as a class rather than
+# per file, because bundles 4, 5 and 6 all carried them and the next one will.
+#
+# They are reference material for building the surfaces, not something the app
+# needs, so nothing is lost by reading them from where the bundle is unpacked.
+# docs/design-handoff-astrolabe/SCREENSHOTS.md says where that is.
+docs/**/screens2/
+docs/**/screenshots/
+
+# Release certificates. A certificate names the workspace, the app, the endpoint,
+# the Lakebase branch and every table in the manifest, and the publication
+# rewrite is a line-wise pass that cannot remove a document. Point
+# bundle/certify-release.sh --store at shared storage to share them.
+.certificates/
+
+# Test and audit artifacts
+.ui-test-artifacts/
+.approval-repro/
+playwright-report/
+test-results/
+coverage/
+
+# Ad-hoc probe and scratch output dropped at the repo root while investigating,
+# by a person or by an agent. Whatever the investigation was about ends up inside
+# them: .audit-probe.json, the one that prompted this entry, holds a live SQL
+# warehouse id and a `system.access.audit` query. Nobody's deliverable, nobody's
+# job to tidy up, and one careless `git add .` away from being committed -- which
+# is exactly the accident that puts an identifier into a tracked file and then
+# into a publication.
+#
+# ROOT-ANCHORED with a leading slash, deliberately. `*-probe.json` unanchored
+# would also hide a deliberate test fixture somewhere down the tree, and a
+# .gitignore that swallows files people meant to commit gets deleted by the next
+# person it confuses. Add a name here rather than widening the patterns.
+/.audit-probe.json
+/*-probe.json
+/*.probe.json
+/*-scratch.json
+/scratch/
+
+# Local tooling
+.DS_Store
+*.log
+# Databricks CLI bundle overrides can contain private workspace and endpoint
+# identifiers. They are local operator state and must never become source input.
+/.databricks/
+# One editor's own reminder state, written into the repository root. Nothing
+# reads it here, and it is named rather than pattern-matched because this repo
+# publishes: an untracked, unignored file at the root is one `git add -A` away
+# from being committed, and from there sync-mirror.sh copies it to a public
+# repository along with whoever's machine it came from.
+/.isaac/

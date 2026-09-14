@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight-agent-harness.local/schemas/error-envelope.schema.json",
+  "title": "ErrorEnvelope",
+  "description": "A forward-compatible typed error envelope.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "code",
+    "message",
+    "retryable"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "code": {
+      "enum": [
+        "invalid_request",
+        "unauthorized",
+        "blocked_dependency",
+        "policy_denied",
+        "internal_error"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "blocked_dependency": {
+      "$ref": "blocked-dependency.schema.json"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-z0-9][a-z0-9_-]{2,95}$"
+    }
+  },
+  "additionalProperties": true
+}

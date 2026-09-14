@@ -1,0 +1,26 @@
+{
+  "name": "@insight-agent-harness/observability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workspace-local safe correlation and audit primitives for agent harnesses",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "dependencies": {
+    "@insight-agent-harness/contracts": "file:../contracts",
+    "@insight-agent-harness/governance": "file:../governance"
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check tests/observability.test.mjs",
+    "test": "npm run check && node --test tests/*.test.mjs"
+  }
+}

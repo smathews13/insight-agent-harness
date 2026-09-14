@@ -1,0 +1,9 @@
+{
+  "document_sha256": "ba7452c27341f5c12af73c1a00309083d6c6af3d5a7985e4a05fd429da609c0f",
+  "generated_at": "1970-01-01T00:00:00Z",
+  "inventory_sha256": "50336bebbb4c61e296cd63e3598caec74156f5cdf051738a7e01e0299ec74729",
+  "scanner": "committed-advisory-snapshot",
+  "schema_version": "1.0",
+  "status": "unverified",
+  "vulnerabilities": []
+}

@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "branding": {
+    "ref": "extension:branding/sample-neutral",
+    "display_name": "Neutral Insight Agent",
+    "icon_uri": "asset://icons/neutral-agent.svg"
+  },
+  "navigation": {
+    "ref": "extension:navigation/sample-neutral",
+    "entries": [
+      { "id": "ask", "label": "Ask", "path": "/" },
+      { "id": "runs", "label": "Runs", "path": "/runs" },
+      { "id": "connections", "label": "Connections", "path": "/connections" }
+    ]
+  },
+  "loading": {
+    "ref": "extension:loading/sample-neutral",
+    "treatment": "neutral-pulse",
+    "label": "Loading insights"
+  },
+  "prompts": {
+    "ref": "extension:prompts/sample-neutral",
+    "pack_refs": ["prompt:neutral-assistant"]
+  },
+  "knowledge": {
+    "ref": "extension:knowledge/sample-neutral",
+    "source_refs": ["knowledge:neutral-guidance"]
+  },
+  "tool_registry": {
+    "ref": "extension:tools/sample-neutral",
+    "registry_refs": ["tool-registry:governed-default"],
+    "enabled_tool_ids": ["query_evidence"]
+  },
+  "genie_mode": {
+    "ref": "extension:genie/sample-neutral",
+    "mode": "genie_only",
+    "required_space_roles": ["primary"]
+  },
+  "resources": {
+    "ref": "extension:resources/sample-neutral",
+    "bundle_target": "sample_neutral",
+    "generated_name_prefix": "neutral_insight"
+  },
+  "migrations": {
+    "ref": "extension:migrations/sample-neutral",
+    "migration_set_ref": "migrations:sample-neutral",
+    "first_migration_version": 46
+  },
+  "settings": {
+    "ref": "extension:settings/sample-neutral",
+    "runtime_editable_keys": ["appearance.color_scheme", "appearance.density"]
+  },
+  "export_chrome": {
+    "ref": "extension:export/sample-neutral",
+    "document_title": "Insight Agent answer",
+    "footer": "Generated from governed evidence"
+  }
+}

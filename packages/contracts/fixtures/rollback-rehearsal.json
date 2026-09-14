@@ -1,0 +1,40 @@
+{
+  "current": {
+    "policy_version": "1.0.0"
+  },
+  "candidate": {
+    "app_artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "model_artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "registered_model": {
+      "version": "7"
+    },
+    "product_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "policy_version": "1.0.0",
+    "lakebase": {
+      "migration_version": 42,
+      "rollback_floor": 40
+    },
+    "authorization": {
+      "auth_mode": "user_authorization",
+      "oauth_scopes": ["dashboards.genie", "sql"]
+    },
+    "resource_bindings_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "genie_curation_fingerprints": [
+      {
+        "role": "data",
+        "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    ]
+  },
+  "transaction": {
+    "app_artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "model_artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "model_version": "7",
+    "product_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "policy_version": "1.0.0",
+    "lakebase_migration_version": 41,
+    "authorization_sha256": "b22fc76c41f0fd17696a1d1e69e4b8bac65c0d53e695198a104ccc43b3f093cc",
+    "resource_bindings_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "genie_curation_sha256": "fdda04ea16e6556ccc85fddb4a9da4dc46777afa520aa1cd5dfe1f9654394d0c"
+  }
+}

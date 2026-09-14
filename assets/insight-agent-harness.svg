@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Insight Agent Harness</title>
+  <rect width="128" height="128" rx="24" fill="#11171c"/>
+  <path d="M32 32h64v16H32zm0 24h64v16H32zm0 24h64v16H32z" fill="#2272b4"/>
+  <circle cx="45" cy="40" r="5" fill="#fff"/>
+  <circle cx="64" cy="64" r="5" fill="#fff"/>
+  <circle cx="83" cy="88" r="5" fill="#fff"/>
+</svg>

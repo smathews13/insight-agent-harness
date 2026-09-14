@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight-agent-harness.local/schemas/audit-event.schema.json",
+  "title": "AuditEvent",
+  "description": "A forward-compatible, resource-neutral security and operations audit event.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "actor",
+    "action",
+    "target_ref",
+    "outcome",
+    "correlation_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^audit_[a-z0-9][a-z0-9_-]{2,95}$"
+    },
+    "event_type": {
+      "enum": [
+        "request",
+        "authorization",
+        "tool_call",
+        "export",
+        "configuration_change",
+        "run_completed"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$"
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "mode",
+        "subject_ref"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "user_authorization",
+            "explicit_service_principal",
+            "system"
+          ]
+        },
+        "subject_ref": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 320,
+          "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "action": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]{1,95}$"
+    },
+    "target_ref": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 320,
+      "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+    },
+    "outcome": {
+      "enum": [
+        "allowed",
+        "denied",
+        "blocked",
+        "failed",
+        "succeeded"
+      ]
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^(?:corr_[a-z0-9][a-z0-9_-]{2,95}|req-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"
+    },
+    "details": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

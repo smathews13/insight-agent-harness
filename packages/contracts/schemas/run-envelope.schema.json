@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://insight-agent-harness.local/schemas/run-envelope.schema.json",
+  "title": "RunEnvelope",
+  "description": "A forward-compatible completed, blocked, or failed agent run.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "request_id",
+    "status",
+    "started_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^run_[a-z0-9][a-z0-9_-]{2,95}$"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^req_[a-z0-9][a-z0-9_-]{2,95}$"
+    },
+    "status": {
+      "enum": ["complete", "blocked", "error"]
+    },
+    "started_at": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$"
+    },
+    "completed_at": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$"
+    },
+    "artifact_ref": {
+      "type": "string",
+      "pattern": "^artifact:[A-Za-z0-9][A-Za-z0-9._-]{2,191}$"
+    },
+    "revision_ref": {
+      "type": "string",
+      "pattern": "^artifact-revision:[A-Za-z0-9][A-Za-z0-9._-]{2,191}$"
+    },
+    "output": {
+      "type": "object",
+      "required": ["summary", "content_blocks"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "content_blocks": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "required": ["block_id", "kind", "content", "evidence_refs"],
+            "properties": {
+              "block_id": {
+                "type": "string",
+                "pattern": "^block_[a-z0-9][a-z0-9_-]{2,63}$"
+              },
+              "kind": {
+                "enum": ["text", "table", "quantitative"]
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20000
+              },
+              "evidence_refs": {
+                "type": "array",
+                "maxItems": 32,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^ev_[a-z0-9][a-z0-9_-]{2,63}$"
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "$ref": "evidence-ref.schema.json"
+      }
+    },
+    "blocked_dependencies": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "$ref": "blocked-dependency.schema.json"
+      }
+    },
+    "error": {
+      "$ref": "error-envelope.schema.json"
+    }
+  },
+  "additionalProperties": true
+}

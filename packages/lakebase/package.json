@@ -1,0 +1,22 @@
+{
+  "name": "@insight-agent-harness/lakebase",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generic Lakebase persistence, migration, revision, and retention primitives",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check tests/node/lakebase.test.mjs",
+    "test": "npm run check && node --test tests/node/*.test.mjs"
+  }
+}

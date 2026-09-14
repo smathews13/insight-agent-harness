@@ -1,0 +1,35 @@
+{
+  "advisory_max_age_days": 7,
+  "attestation_max_age_days": 7,
+  "approved_external_scanners": [
+    "committed-advisory-snapshot",
+    "dependency-track",
+    "grype",
+    "npm-audit",
+    "osv-scanner",
+    "pip-audit",
+    "semgrep"
+  ],
+  "approved_sql_identifier_helpers": [
+    "assertSqlIdentifier",
+    "escapeIdentifier",
+    "quoteIdentifier",
+    "quoteSqlIdentifier",
+    "safeIdentifier",
+    "sqlIdentifier"
+  ],
+  "excluded_paths": [
+    "bundle/genie-drift-check.test.sh",
+    "docs/design-handoff-astrolabe",
+    "docs/design-handoff-legacy downstream product-dubois-revamp",
+    "mirror/sync-mirror.test.sh",
+    "platform/app/build",
+    "platform/app/dist",
+    "platform/app/node_modules.partial-harness",
+    "scripts/security_gate.py",
+    "scripts/tests/test_security_gate.py",
+    "scripts/tests/fixtures/security"
+  ],
+  "schema_version": "1.0",
+  "suppression_max_days": 180
+}

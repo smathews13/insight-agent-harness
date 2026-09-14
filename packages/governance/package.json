@@ -1,0 +1,22 @@
+{
+  "name": "@insight-agent-harness/governance",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workspace-local identity and policy decisions for agent harnesses",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check tests/governance.test.mjs",
+    "test": "npm run check && node --test tests/*.test.mjs"
+  }
+}

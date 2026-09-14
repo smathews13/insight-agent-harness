@@ -1,0 +1,23 @@
+{
+  "name": "@insight-agent-harness/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workspace-local wire contracts for the Insight Agent Harness",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./validation": "./src/validation.js",
+    "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "check": "node scripts/generate.mjs --check",
+    "test:node": "node --test tests/node/*.test.mjs",
+    "test:python": "PYTHONPATH=src python3 -m unittest discover -s tests/python -p 'test_*.py'",
+    "test": "npm run check && npm run test:node && npm run test:python"
+  }
+}
