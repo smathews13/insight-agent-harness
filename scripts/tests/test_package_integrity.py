@@ -289,6 +289,12 @@ class PackageIntegrityTest(unittest.TestCase):
             any("@test/governance@1.0.0: license is review-required" in item for item in violations)
         )
 
+    def test_license_report_is_diagnostic_only(self) -> None:
+        self.assertEqual(
+            integrity.main(["license-report", "--root", str(self.root)]),
+            0,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

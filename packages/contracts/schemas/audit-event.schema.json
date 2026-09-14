@@ -40,17 +40,10 @@
     },
     "actor": {
       "type": "object",
-      "required": [
-        "mode",
-        "subject_ref"
-      ],
+      "required": ["mode", "subject_ref"],
       "properties": {
         "mode": {
-          "enum": [
-            "user_authorization",
-            "explicit_service_principal",
-            "system"
-          ]
+          "enum": ["user_authorization", "explicit_service_principal", "system"]
         },
         "subject_ref": {
           "type": "string",
@@ -72,13 +65,7 @@
       "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
     },
     "outcome": {
-      "enum": [
-        "allowed",
-        "denied",
-        "blocked",
-        "failed",
-        "succeeded"
-      ]
+      "enum": ["allowed", "denied", "blocked", "failed", "succeeded"]
     },
     "correlation_id": {
       "type": "string",
@@ -87,6 +74,47 @@
     "details": {
       "type": "object",
       "maxProperties": 32,
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 192,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$"
+        },
+        "export_id": {
+          "type": "string",
+          "pattern": "^export_[a-z0-9][a-z0-9_-]{2,95}$"
+        },
+        "revision_ref": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 320,
+          "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "format": {
+          "enum": [
+            "markdown",
+            "json",
+            "csv",
+            "tsv",
+            "html",
+            "xlsx",
+            "pdf",
+            "png",
+            "pptx"
+          ]
+        },
+        "redaction_profile_ref": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 320,
+          "pattern": "^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$"
+        }
+      },
       "additionalProperties": true
     }
   },

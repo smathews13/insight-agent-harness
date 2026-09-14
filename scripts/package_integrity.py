@@ -738,6 +738,7 @@ def main(argv: list[str] | None = None) -> int:
             "generate",
             "check",
             "package-check",
+            "license-report",
             "release-generate",
             "license-final-check",
         ),
@@ -755,7 +756,8 @@ def main(argv: list[str] | None = None) -> int:
             root,
             args.output,
             DEFAULT_OUTPUT
-            if args.command in {"generate", "check", "package-check", "license-final-check"}
+            if args.command
+            in {"generate", "check", "package-check", "license-report", "license-final-check"}
             else None,
         )
         if args.command == "release-generate":
@@ -798,6 +800,19 @@ def main(argv: list[str] | None = None) -> int:
                 f"wrote deterministic SBOM with {len(document['packages'])} packages; "
                 f"{_review_count(document)} license entries require review"
             )
+            return 0
+        if args.command == "license-report":
+            policy = load_policy(root, policy_path)
+            document = build_sbom(root, policy_path)
+            forbidden = policy_violations(
+                document, set(policy["forbidden_license_identifiers"])
+            )
+            print(
+                f"license diagnostic only: {_review_count(document)} entries require review; "
+                f"{len(forbidden)} forbidden-license finding(s)"
+            )
+            for finding in forbidden:
+                print(f"  - {finding}")
             return 0
         if args.command == "license-final-check":
             errors = check(root, output, policy_path)

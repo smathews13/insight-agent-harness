@@ -70,16 +70,16 @@ class ProductManifestMaterializationTest(unittest.TestCase):
         self.assertEqual(alias["telemetry_key"], "compat.player_insights.catalog")
         self.assertEqual(alias["removal_version"], "1.2.0")
 
-    def test_downstream_migrations_begin_after_immutable_core_45(self) -> None:
+    def test_downstream_migrations_begin_after_immutable_core_47(self) -> None:
         slots = json.loads(
             (ROOT / "profiles" / "sample-neutral" / materializer.EXTENSION_SLOT_FILE).read_text()
         )
-        self.assertEqual(slots["migrations"]["first_migration_version"], 46)
+        self.assertEqual(slots["migrations"]["first_migration_version"], 48)
         migration_source = (
             ROOT / "platform" / "app" / "server" / "lib" / "migrations.ts"
         ).read_text()
         versions = [int(value) for value in re.findall(r"\bversion:\s*(\d+)", migration_source)]
-        self.assertEqual(versions[-2:], [44, 45])
+        self.assertEqual(versions[-3:], [45, 46, 47])
         self.assertEqual(max(versions), slots["migrations"]["first_migration_version"] - 1)
 
     def test_unknown_privileged_fields_stop_materialization(self) -> None:

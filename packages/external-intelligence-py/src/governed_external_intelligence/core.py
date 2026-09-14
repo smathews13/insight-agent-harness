@@ -16,6 +16,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from types import MappingProxyType
 from typing import Any, Protocol
 from urllib.parse import unquote, urlsplit
 
@@ -23,12 +24,15 @@ _OPAQUE_REF = re.compile(r"^[a-z][a-z0-9_.-]{1,63}:[A-Za-z0-9][A-Za-z0-9._/-]{0,
 _SOURCE_ID = re.compile(r"^src_[a-z0-9][a-z0-9_-]{2,63}$")
 _PARSER_VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _LICENSE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
-_MEDIA_TYPE = re.compile(
-    r"^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+_MEDIA_TYPE = re.compile(r"^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$")
+_NATIVE_TEXT_MEDIA_TYPES = frozenset(
+    {
+        "application/json",
+        "application/xml",
+        "application/yaml",
+    }
 )
-_RFC3339_UTC = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$"
-)
+_RFC3339_UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$")
 _URL_ENCODED_PATH_DELIMITER = re.compile(r"%(?:2e|2f|5c)", re.IGNORECASE)
 _PROTECTED_PREFIXES = (
     "authorization:",
@@ -100,6 +104,17 @@ class FindingKind(str, Enum):
     SECRET = "secret"
 
 
+@dataclass(frozen=True)
+class ExtractedText:
+    """Bounded output from a separately reviewed container-text parser."""
+
+    text: str
+    page_count: int
+    truncated: bool = False
+    encrypted: bool = False
+    unsupported_compression: bool = False
+
+
 def parse_timestamp(value: str) -> datetime:
     """Parse a UTC RFC3339 timestamp, rejecting naive and non-UTC values."""
 
@@ -146,6 +161,9 @@ class SourcePolicy:
     freshness_seconds: int
     reviewed_at: str
     review_expires_at: str
+    allowed_text_extractor_versions: tuple[str, ...] = ()
+    max_extracted_pages: int = 100
+    max_extracted_text_bytes: int = 1024 * 1024
 
     def __post_init__(self) -> None:
         if not _SOURCE_ID.fullmatch(self.source_id):
@@ -193,6 +211,17 @@ class SourcePolicy:
             raise ValueError("freshness_seconds must be positive")
         if parse_timestamp(self.reviewed_at) >= parse_timestamp(self.review_expires_at):
             raise ValueError("source review must expire after it was performed")
+        if any(
+            not _PARSER_VERSION.fullmatch(version)
+            for version in self.allowed_text_extractor_versions
+        ):
+            raise ValueError(
+                "allowed_text_extractor_versions must name reviewed extractor versions"
+            )
+        if self.max_extracted_pages < 1:
+            raise ValueError("max_extracted_pages must be positive")
+        if self.max_extracted_text_bytes < 1:
+            raise ValueError("max_extracted_text_bytes must be positive")
 
     def assert_review_current(self, at: str) -> None:
         instant = parse_timestamp(at)
@@ -425,9 +454,7 @@ class UntrustedTextScanner:
         (
             FindingKind.SECRET,
             "secret.jwt",
-            re.compile(
-                r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b"
-            ),
+            re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b"),
         ),
     )
 
@@ -465,6 +492,8 @@ class RawSnapshot:
     source_classification: SourceClassification
     review_status: ReviewStatus
     finding_codes: tuple[str, ...] = ()
+    text_extractor_version: str = ""
+    extracted_page_count: int = 0
 
     def to_metadata(self) -> Mapping[str, Any]:
         return {
@@ -496,6 +525,8 @@ class RawSnapshot:
             "source_classification": self.source_classification.value,
             "review_status": self.review_status.value,
             "finding_codes": list(self.finding_codes),
+            "text_extractor_version": self.text_extractor_version,
+            "extracted_page_count": self.extracted_page_count,
         }
 
 
@@ -523,6 +554,7 @@ class NormalizedClaim:
     effective_at: str
     fresh_until: str
     parser_version: str
+    text_extractor_version: str
     content_hash: str
     owner_ref: str
     reviewer_policy_ref: str
@@ -540,6 +572,7 @@ class NormalizedClaim:
         attributes = {
             "effective_at": self.effective_at,
             "parser_version": self.parser_version,
+            "text_extractor_version": self.text_extractor_version,
             "content_hash": self.content_hash,
             "requested_url": self.requested_url,
             "final_url": self.final_url,
@@ -578,6 +611,7 @@ class NormalizedClaim:
             "effective_at": self.effective_at,
             "fresh_until": self.fresh_until,
             "parser_version": self.parser_version,
+            "text_extractor_version": self.text_extractor_version,
             "content_hash": self.content_hash,
             "owner_ref": self.owner_ref,
             "reviewer_policy_ref": self.reviewer_policy_ref,
@@ -648,7 +682,36 @@ class ClaimParser(Protocol):
     @property
     def parser_version(self) -> str: ...
 
-    def parse(self, snapshot: RawSnapshot, body: bytes) -> Sequence[ClaimDraft]: ...
+    def parse(self, snapshot: RawSnapshot, text: bytes) -> Sequence[ClaimDraft]: ...
+
+
+class TextExtractionAdapter(Protocol):
+    """Reviewed parser port for extracting scan-ready text from one media type."""
+
+    @property
+    def extractor_version(self) -> str: ...
+
+    def extract(self, body: bytes, media_type: str) -> ExtractedText: ...
+
+
+class CompiledTextExtractorRegistry:
+    """Immutable extractor registrations assembled by trusted application code."""
+
+    def __init__(self, extractors: Mapping[str, TextExtractionAdapter]) -> None:
+        registrations: dict[str, tuple[TextExtractionAdapter, str]] = {}
+        for media_type, extractor in extractors.items():
+            if not isinstance(media_type, str) or not _MEDIA_TYPE.fullmatch(media_type):
+                raise ValueError("text extractor registry keys must be canonical MIME types")
+            extractor_version = getattr(extractor, "extractor_version", "")
+            if not isinstance(extractor_version, str) or not _PARSER_VERSION.fullmatch(
+                extractor_version
+            ):
+                raise ValueError("compiled text extractors must declare a valid version")
+            registrations[media_type] = (extractor, extractor_version)
+        self._registrations = MappingProxyType(registrations)
+
+    def resolve(self, media_type: str) -> tuple[TextExtractionAdapter, str] | None:
+        return self._registrations.get(media_type)
 
 
 class ReviewAuthorizer(Protocol):
@@ -740,9 +803,7 @@ def _canonical_url_path(path: str) -> str:
     if unquote(decoded_path) != decoded_path:
         raise PolicyDenied("URL path contains nested percent encoding")
     normalized = posixpath.normpath(decoded_path)
-    if normalized != decoded_path.rstrip("/") and not (
-        decoded_path == "/" and normalized == "/"
-    ):
+    if normalized != decoded_path.rstrip("/") and not (decoded_path == "/" and normalized == "/"):
         raise PolicyDenied("URL path is not canonical")
     return normalized
 
@@ -766,6 +827,52 @@ def _validate_draft(draft: ClaimDraft, policy: SourcePolicy) -> None:
         raise ValueError("supporting source classification is invalid")
 
 
+def _is_native_text_media_type(media_type: str) -> bool:
+    return (
+        media_type.startswith("text/")
+        or media_type in _NATIVE_TEXT_MEDIA_TYPES
+        or media_type.endswith("+json")
+        or media_type.endswith("+xml")
+    )
+
+
+def _looks_like_container(body: bytes) -> bool:
+    return body.startswith(
+        (
+            b"%PDF-",
+            b"PK\x03\x04",
+            b"PK\x05\x06",
+            b"PK\x07\x08",
+            b"\x1f\x8b",
+            b"\x7fELF",
+            b"\x89PNG\r\n\x1a\n",
+            b"\xff\xd8\xff",
+        )
+    )
+
+
+def _expected_signature_present(body: bytes, media_type: str) -> bool:
+    if media_type == "application/pdf":
+        return body.startswith(b"%PDF-")
+    if media_type in {
+        "application/zip",
+        "application/x-zip-compressed",
+        "application/java-archive",
+    }:
+        return body.startswith((b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"))
+    return True
+
+
+def _pdf_framing_failure(body: bytes) -> str | None:
+    if not body.startswith(b"%PDF-"):
+        return "content.media-type-mismatch"
+    if not body.rstrip(b"\x00\t\n\x0c\r ").endswith(b"%%EOF"):
+        return "content.extractor-truncated"
+    if re.search(rb"/Encrypt(?:\s|/|>>|$)", body):
+        return "content.extractor-encrypted"
+    return None
+
+
 class ExternalIntelligenceIngestor:
     """Validates, snapshots, scans, normalizes, and appends evidence claims."""
 
@@ -776,12 +883,40 @@ class ExternalIntelligenceIngestor:
         claims: ManagedClaimRepository,
         quarantine: QuarantineSink,
         scanner: UntrustedTextScanner | None = None,
+        text_extractors: CompiledTextExtractorRegistry | None = None,
     ) -> None:
         self._registry = registry
         self._snapshots = snapshots
         self._claims = claims
         self._quarantine = quarantine
         self._scanner = scanner or UntrustedTextScanner()
+        if text_extractors is not None and not isinstance(
+            text_extractors, CompiledTextExtractorRegistry
+        ):
+            raise TypeError("text_extractors must be a compiled trusted registry")
+        self._text_extractors = text_extractors or CompiledTextExtractorRegistry({})
+
+    def _quarantine_result(
+        self,
+        snapshot: RawSnapshot,
+        body: bytes,
+        finding_codes: Sequence[str],
+    ) -> IngestionResult:
+        codes = tuple(sorted(set(finding_codes)))
+        quarantined = replace(
+            snapshot,
+            review_status=ReviewStatus.QUARANTINED,
+            finding_codes=codes,
+        )
+        record = QuarantineRecord(
+            snapshot_ref="snapshot:" + quarantined.snapshot_id,
+            source_id=quarantined.source_id,
+            retrieved_at=quarantined.retrieved_at,
+            finding_codes=codes,
+            content_hash=quarantined.content_hash,
+        )
+        self._quarantine.put_quarantined(quarantined, body, record)
+        return IngestionResult(snapshot=quarantined, claims=(), quarantine=record)
 
     def ingest(self, envelope: FetchEnvelope, parser: ClaimParser) -> IngestionResult:
         policy = self._registry.validate(envelope)
@@ -800,14 +935,6 @@ class ExternalIntelligenceIngestor:
         if self._scanner.scan(url_metadata, "text/plain"):
             raise PolicyDenied("URL metadata contains sensitive or instruction-like content")
         content_hash = _sha256(envelope.body)
-        finding_codes = tuple(
-            sorted(
-                {
-                    finding.rule_id
-                    for finding in self._scanner.scan(envelope.body, envelope.media_type)
-                }
-            )
-        )
         snapshot_id = (
             "snap_"
             + _sha256(
@@ -832,7 +959,6 @@ class ExternalIntelligenceIngestor:
                 ).encode("utf-8")
             )[:32]
         )
-        review_status = ReviewStatus.QUARANTINED if finding_codes else ReviewStatus.PENDING
         snapshot = RawSnapshot(
             snapshot_id=snapshot_id,
             source_id=envelope.source_id,
@@ -853,23 +979,120 @@ class ExternalIntelligenceIngestor:
             rate_limit_max_requests_per_minute=(envelope.rate_limit_max_requests_per_minute),
             freshness_seconds=policy.freshness_seconds,
             source_classification=policy.classification,
-            review_status=review_status,
-            finding_codes=finding_codes,
+            review_status=ReviewStatus.PENDING,
+        )
+
+        extracted_text: str
+        if _is_native_text_media_type(envelope.media_type):
+            if _looks_like_container(envelope.body):
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.media-type-mismatch",),
+                )
+            try:
+                extracted_text = envelope.body.decode("utf-8", errors="strict")
+            except UnicodeDecodeError:
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.invalid-utf8",),
+                )
+        else:
+            if not _expected_signature_present(envelope.body, envelope.media_type):
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.media-type-mismatch",),
+                )
+            if envelope.media_type == "application/pdf":
+                pdf_failure = _pdf_framing_failure(envelope.body)
+                if pdf_failure is not None:
+                    return self._quarantine_result(
+                        snapshot,
+                        envelope.body,
+                        (pdf_failure,),
+                    )
+            registration = self._text_extractors.resolve(envelope.media_type)
+            if registration is None:
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.extractor-unavailable",),
+                )
+            extractor, extractor_version = registration
+            current_extractor_version = getattr(extractor, "extractor_version", "")
+            if (
+                current_extractor_version != extractor_version
+                or extractor_version not in policy.allowed_text_extractor_versions
+            ):
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.extractor-unreviewed",),
+                )
+            try:
+                extraction = extractor.extract(envelope.body, envelope.media_type)
+            except Exception:
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.extractor-failure",),
+                )
+            if not isinstance(extraction, ExtractedText):
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    ("content.extractor-invalid-output",),
+                )
+            extraction_failures = []
+            if extraction.truncated:
+                extraction_failures.append("content.extractor-truncated")
+            if extraction.encrypted:
+                extraction_failures.append("content.extractor-encrypted")
+            if extraction.unsupported_compression:
+                extraction_failures.append("content.extractor-unsupported-compression")
+            if (
+                isinstance(extraction.page_count, bool)
+                or not isinstance(extraction.page_count, int)
+                or extraction.page_count < 1
+            ):
+                extraction_failures.append("content.extractor-invalid-page-count")
+            elif extraction.page_count > policy.max_extracted_pages:
+                extraction_failures.append("content.extractor-page-limit")
+            if not isinstance(extraction.text, str) or not extraction.text:
+                extraction_failures.append("content.extractor-empty-text")
+                extracted_text = ""
+            else:
+                extracted_text = extraction.text
+                if len(extracted_text.encode("utf-8")) > policy.max_extracted_text_bytes:
+                    extraction_failures.append("content.extractor-text-limit")
+            snapshot = replace(
+                snapshot,
+                text_extractor_version=extractor_version,
+                extracted_page_count=(
+                    extraction.page_count
+                    if isinstance(extraction.page_count, int)
+                    and not isinstance(extraction.page_count, bool)
+                    and extraction.page_count >= 0
+                    else 0
+                ),
+            )
+            if extraction_failures:
+                return self._quarantine_result(
+                    snapshot,
+                    envelope.body,
+                    extraction_failures,
+                )
+
+        scan_body = extracted_text.encode("utf-8")
+        finding_codes = tuple(
+            sorted({finding.rule_id for finding in self._scanner.scan(scan_body, "text/plain")})
         )
         if finding_codes:
-            record = QuarantineRecord(
-                snapshot_ref="snapshot:" + snapshot.snapshot_id,
-                source_id=snapshot.source_id,
-                retrieved_at=snapshot.retrieved_at,
-                finding_codes=finding_codes,
-                content_hash=content_hash,
-            )
-            self._quarantine.put_quarantined(snapshot, envelope.body, record)
-            return IngestionResult(snapshot=snapshot, claims=(), quarantine=record)
+            return self._quarantine_result(snapshot, envelope.body, finding_codes)
 
-        drafts = tuple(
-            itertools.islice(parser.parse(snapshot, envelope.body), policy.max_claims + 1)
-        )
+        drafts = tuple(itertools.islice(parser.parse(snapshot, scan_body), policy.max_claims + 1))
         if len(drafts) > policy.max_claims:
             raise PolicyDenied("reviewed parser emitted too many claims")
         for draft in drafts:
@@ -894,20 +1117,11 @@ class ExternalIntelligenceIngestor:
             )
         )
         if extracted_finding_codes:
-            snapshot = replace(
+            return self._quarantine_result(
                 snapshot,
-                review_status=ReviewStatus.QUARANTINED,
-                finding_codes=extracted_finding_codes,
+                envelope.body,
+                extracted_finding_codes,
             )
-            record = QuarantineRecord(
-                snapshot_ref="snapshot:" + snapshot.snapshot_id,
-                source_id=snapshot.source_id,
-                retrieved_at=snapshot.retrieved_at,
-                finding_codes=extracted_finding_codes,
-                content_hash=content_hash,
-            )
-            self._quarantine.put_quarantined(snapshot, envelope.body, record)
-            return IngestionResult(snapshot=snapshot, claims=(), quarantine=record)
 
         self._snapshots.put_once(snapshot, envelope.body)
         normalized = []
@@ -923,6 +1137,7 @@ class ExternalIntelligenceIngestor:
                 "value": draft.value,
                 "effective_at": envelope.effective_at,
                 "parser_version": parser.parser_version,
+                "text_extractor_version": snapshot.text_extractor_version,
                 "conflict_group": draft.conflict_group,
             }
             claim_id = "claim_" + _sha256(_canonical(stable).encode("utf-8"))[:24]
@@ -943,6 +1158,7 @@ class ExternalIntelligenceIngestor:
                         + timedelta(seconds=policy.freshness_seconds)
                     ),
                     parser_version=parser.parser_version,
+                    text_extractor_version=snapshot.text_extractor_version,
                     content_hash=content_hash,
                     owner_ref=policy.owner_ref,
                     reviewer_policy_ref=policy.reviewer_policy_ref,

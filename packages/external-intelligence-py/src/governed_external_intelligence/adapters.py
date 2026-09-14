@@ -110,9 +110,7 @@ def _write_once(
             os.close(descriptor)
 
 
-def _append(
-    root: Path, directory_components: Sequence[str], filename: str, content: bytes
-) -> None:
+def _append(root: Path, directory_components: Sequence[str], filename: str, content: bytes) -> None:
     with _open_directory(root, directory_components) as directory_descriptor:
         flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT
         if hasattr(os, "O_NOFOLLOW"):
@@ -132,9 +130,7 @@ def _append(
             os.close(descriptor)
 
 
-def _read_optional(
-    root: Path, directory_components: Sequence[str], filename: str
-) -> bytes | None:
+def _read_optional(root: Path, directory_components: Sequence[str], filename: str) -> bytes | None:
     try:
         with _open_directory(root, directory_components) as directory_descriptor:
             return _read_file(directory_descriptor, filename)
@@ -189,9 +185,7 @@ class LocalFilesystemAdapter:
             b"".join(_canonical_bytes(claim.to_record()) for claim in claims),
         )
 
-    def put_quarantined(
-        self, snapshot: RawSnapshot, body: bytes, record: QuarantineRecord
-    ) -> None:
+    def put_quarantined(self, snapshot: RawSnapshot, body: bytes, record: QuarantineRecord) -> None:
         if len(body) != snapshot.byte_count:
             raise ValueError("quarantined snapshot byte_count does not match body")
         if hashlib.sha256(body).hexdigest() != snapshot.content_hash:

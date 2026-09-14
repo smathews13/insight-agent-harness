@@ -22,17 +22,28 @@ provider, registry write, or production storage adapter.
    Production implementations map `GovernedUcVolumeSnapshotStore` to a
    governed Unity Catalog Volume. This repository supplies only
    `LocalFilesystemAdapter` for offline tests.
-4. Text is untrusted. Prompt-injection, PII, and secret findings quarantine the
-   snapshot before parsing. Quarantined bytes use the separate
+4. Text is untrusted. Native UTF-8 text is decoded strictly. PDF, archive,
+   binary, and other container media are quarantined by default and are never
+   decoded with replacement characters. A container can proceed only through a
+   `TextExtractionAdapter` in an immutable `CompiledTextExtractorRegistry`
+   assembled by trusted application code, and its captured version must be
+   explicitly reviewed by the source policy. Extracted page count and UTF-8
+   text size are bounded.
+   Missing or failed extractors, malformed media signatures, truncation,
+   encryption, unsupported compression, and limit violations all quarantine
+   the original bytes for manual review without producing claims or evidence.
+5. Prompt-injection, PII, and secret scanning runs over native or reviewed
+   extracted text before claim parsing. Quarantined bytes use the separate
    `QuarantineSink`; they never enter the normal raw-snapshot store.
    Quarantine records contain rule codes and hashes, not copied source text.
-5. Reviewed parsers emit `ClaimDraft` values. The package records retrieval and
+6. Reviewed claim parsers emit `ClaimDraft` values from the already-scanned
+   text. The package records retrieval and
    source URLs and license, effective/retrieval timestamps, parser version,
-   content hash, source classification, review status/provenance, impact,
-   conflict group, and a contract-shaped evidence ref.
+   text-extractor version, content hash, source classification, review
+   status/provenance, impact, conflict group, and a contract-shaped evidence ref.
    Production implementations map `ManagedTableClaimRepository` to managed
    Unity Catalog tables.
-6. Retrieval exposes only fresh, approved claims. High-impact pending claims
+7. Retrieval exposes only fresh, approved claims. High-impact pending claims
    explicitly require human approval through a `ReviewAuthorizer` bound to the
    source's reviewer policy. Review decisions are one-way and carry an opaque
    review-record reference. Contradictory approved claims remain visible

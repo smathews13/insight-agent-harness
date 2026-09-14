@@ -47,5 +47,20 @@ Dependency and attestation adapters remain available as optional diagnostics:
 npm run diagnostics:supply-chain
 ```
 
+The default dependency check is informational. Missing, stale, malformed, or
+lock-mismatched advisory evidence is emitted as a clear `UNVERIFIED` warning and
+exits successfully; reported advisory findings remain visible in the JSON.
+License entries requiring review are reported without becoming a release gate.
 These diagnostics do not gate the local build, public mirror, or practical
-release path. Credentials and private evidence must stay outside the repository.
+release path.
+
+Use the explicit fail-closed security review only when trusted advisory and
+attestation verifiers and trust roots are configured:
+
+```bash
+python3 scripts/security_gate.py dependency --strict
+npm run diagnostics:supply-chain:strict
+```
+
+Strict mode rejects unavailable, invalid, stale, mismatched, or unverified
+evidence. Credentials and private evidence must stay outside the repository.

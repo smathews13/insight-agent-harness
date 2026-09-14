@@ -25,8 +25,8 @@ Slot values are opaque `extension:<slot>/<name>` references, not filesystem or
 module import paths. Upstream source never imports `overlays/`, and downstream
 content is copied only under generated `.harness/extensions/`.
 
-The upstream migration ledger is immutable through core migration 45.
-Downstream migration sets begin at version 46; they append through the
+The upstream migration ledger is immutable through core migration 47.
+Downstream migration sets begin at version 48; they append through the
 `migrations` slot and never renumber or replace core migrations.
 
 Operational implementations use immutable compiled registries bound to the

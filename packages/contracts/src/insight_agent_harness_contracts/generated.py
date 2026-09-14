@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Literal, TypedDict
 
-SCHEMA_SET_SHA256 = "d640e0cb520963b571729dcc3a10d7d3b7e1ca5280a1a1f958dff0b87f5712f8"
+SCHEMA_SET_SHA256 = "4e7c32ebc3039ea945f3198839f16cbc9518e35b7f20732e0eb6ac660d8c3226"
 SCHEMA_SHA256 = {
-    "audit-event.schema.json": "f776f047c6dff79e014b75930280e53a947a3cb4a11d23bce07a13bfd7351bdc",
+    "audit-event.schema.json": "13bec985a09d96dcdfc8ee78784917ed7bde1634e768e4cc05f4400b00871c91",
     "blocked-dependency.schema.json": "799e85b8b464e0d9b9098f42eaddfc2628b955b8032f70f71cef49573dc73ccf",
     "error-envelope.schema.json": "db94171c9baee58ade3cee9d3624330e618391c3845b426356a6b8e55cb818b9",
     "evidence-ref.schema.json": "3428cf971bbf22837ef58ee3b4547b22e0b3abf1088e1d592795d432d57faf59",
@@ -19,7 +19,7 @@ SCHEMA_SHA256 = {
 
 
 class _AuditEventOptional(TypedDict, total=False):
-    details: dict[str, Any]
+    details: AuditEventDetails
 
 
 class AuditEvent(_AuditEventOptional):
@@ -39,6 +39,19 @@ class AuditEvent(_AuditEventOptional):
 class AuditEventActor(TypedDict):
     mode: Literal["user_authorization", "explicit_service_principal", "system"]
     subject_ref: str
+
+
+class _AuditEventDetailsOptional(TypedDict, total=False):
+    artifact_id: str
+    export_id: str
+    revision_ref: str
+    canonical_sha256: str
+    format: Literal["markdown", "json", "csv", "tsv", "html", "xlsx", "pdf", "png", "pptx"]
+    redaction_profile_ref: str
+
+
+class AuditEventDetails(_AuditEventDetailsOptional):
+    pass
 
 
 class BlockedDependency(TypedDict):

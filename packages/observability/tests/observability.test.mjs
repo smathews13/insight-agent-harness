@@ -22,7 +22,10 @@ const CORRELATION_ID = `corr_${UUID}`;
 test("correlation accepts only printable bounded ids and mints on rejection", () => {
   assert.equal(usableCorrelationId(CORRELATION_ID), CORRELATION_ID);
   assert.equal(usableCorrelationId("corr_ok\nforged-line"), null);
-  assert.equal(normalizeCorrelationId("raw prompt", () => UUID), CORRELATION_ID);
+  assert.equal(
+    normalizeCorrelationId("raw prompt", () => UUID),
+    CORRELATION_ID,
+  );
   assert.deepEqual(
     buildCorrelationContext(
       {
@@ -42,7 +45,11 @@ test("correlation accepts only printable bounded ids and mints on rejection", ()
     },
   );
   assert.throws(
-    () => buildCorrelationContext({ gateway_request_id: "unsafe\nvalue" }, () => UUID),
+    () =>
+      buildCorrelationContext(
+        { gateway_request_id: "unsafe\nvalue" },
+        () => UUID,
+      ),
     /printable opaque identifier/,
   );
 });
@@ -75,7 +82,10 @@ test("safe metadata omits raw prompts, responses, headers, and governed data", (
     latency_ms: 15,
     retryable: false,
   });
-  assert.doesNotMatch(JSON.stringify(metadata), /private|live-token|session|governed/);
+  assert.doesNotMatch(
+    JSON.stringify(metadata),
+    /private|live-token|session|governed/,
+  );
 });
 
 test("telemetry redaction removes nested credentials and content", () => {
@@ -97,7 +107,10 @@ test("telemetry redaction removes nested credentials and content", () => {
     },
     headers: "[REDACTED]",
   });
-  assert.doesNotMatch(JSON.stringify(redacted), /governed records|raw answer|hunter2|live-token|session-value/);
+  assert.doesNotMatch(
+    JSON.stringify(redacted),
+    /governed records|raw answer|hunter2|live-token|session-value/,
+  );
 });
 
 test("no-secret and safe-payload guards provide negative proofs", () => {
@@ -107,11 +120,17 @@ test("no-secret and safe-payload guards provide negative proofs", () => {
     UnsafeTelemetryError,
   );
   assert.throws(
-    () => assertSafeTelemetryPayload({ prompt: "even a non-secret prompt is not telemetry" }),
+    () =>
+      assertSafeTelemetryPayload({
+        prompt: "even a non-secret prompt is not telemetry",
+      }),
     /raw_prompt/,
   );
   assert.doesNotThrow(() =>
-    assertSafeTelemetryPayload({ correlation_id: CORRELATION_ID, status: "succeeded" }),
+    assertSafeTelemetryPayload({
+      correlation_id: CORRELATION_ID,
+      status: "succeeded",
+    }),
   );
 });
 
@@ -127,8 +146,16 @@ test("AuditEvent construction is contract-valid, immutable, and content-safe", (
       details: {
         request_id: "req_123",
         duration_ms: 42,
+        artifact_id: "artifact_answer_1",
+        export_id: "export_123e4567-e89b-12d3-a456-426614174000",
+        revision_ref: "artifact-revision:revision_1",
+        canonical_sha256: "a".repeat(64),
+        format: "json",
+        redaction_profile_ref: "redaction-profile:canonical-safe-v1",
         prompt: "do not log me",
         response: "do not log me either",
+        sql: "SELECT governed_content",
+        trace: "raw trace",
         access_token: "token-value",
       },
     },
@@ -138,7 +165,20 @@ test("AuditEvent construction is contract-valid, immutable, and content-safe", (
     },
   );
   assert.equal(event.event_id, `audit_${UUID}`);
-  assert.deepEqual(event.details, { request_id: "req_123", duration_ms: 42 });
+  assert.deepEqual(event.details, {
+    request_id: "req_123",
+    duration_ms: 42,
+    artifact_id: "artifact_answer_1",
+    export_id: "export_123e4567-e89b-12d3-a456-426614174000",
+    revision_ref: "artifact-revision:revision_1",
+    canonical_sha256: "a".repeat(64),
+    format: "json",
+    redaction_profile_ref: "redaction-profile:canonical-safe-v1",
+  });
+  assert.doesNotMatch(
+    JSON.stringify(event.details),
+    /SELECT governed_content|raw trace|token-value/,
+  );
   assert.equal(Object.isFrozen(event), true);
   assert.equal(Object.isFrozen(event.details), true);
   assert.throws(() => {
@@ -162,7 +202,10 @@ test("audit sink is append-only and revalidates events", async () => {
   await appendAuditEvent({ append: (item) => appended.push(item) }, event);
   assert.deepEqual(appended, [event]);
   await assert.rejects(
-    appendAuditEvent({ append: () => {} }, { ...event, correlation_id: "unsafe" }),
+    appendAuditEvent(
+      { append: () => {} },
+      { ...event, correlation_id: "unsafe" },
+    ),
     /Invalid AuditEvent/,
   );
 });

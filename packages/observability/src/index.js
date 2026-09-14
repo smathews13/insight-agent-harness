@@ -11,12 +11,16 @@ export const REDACTED = "[REDACTED]";
 const SAFE_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const SAFE_METADATA_KEYS = new Set([
   "action",
+  "artifact_id",
   "attempt",
   "capability",
+  "canonical_sha256",
   "correlation_id",
   "duration_ms",
   "error_code",
   "event_type",
+  "export_id",
+  "format",
   "gateway_request_id",
   "http_status",
   "latency_ms",
@@ -25,6 +29,8 @@ const SAFE_METADATA_KEYS = new Set([
   "outcome",
   "policy_id",
   "request_id",
+  "redaction_profile_ref",
+  "revision_ref",
   "retryable",
   "run_id",
   "status",
@@ -40,8 +46,14 @@ const SECRET_TEXT = [
 ];
 
 const KEY_CLASSES = [
-  ["raw_prompt", /^(?:input|input_text|messages?|prompt|question|user_content)$/i],
-  ["raw_response", /^(?:answer|completion|output|output_text|response|result_text)$/i],
+  [
+    "raw_prompt",
+    /^(?:input|input_text|messages?|prompt|question|user_content)$/i,
+  ],
+  [
+    "raw_response",
+    /^(?:answer|completion|output|output_text|response|result_text)$/i,
+  ],
   ["token", /(?:^|[_-])(?:access|id|refresh)?[_-]?token(?:$|[_-])/i],
   ["cookie", /(?:^|[_-])(?:cookies?|session)(?:$|[_-])/i],
   ["header", /(?:^|[_-])headers?(?:$|[_-])/i],
@@ -67,7 +79,8 @@ const FORBIDDEN_TELEMETRY_CLASSES = new Set([
 const SECRET_CLASSES = new Set(["token", "cookie", "header", "secret"]);
 
 function deepFreeze(value) {
-  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  if (!value || typeof value !== "object" || Object.isFrozen(value))
+    return value;
   Object.freeze(value);
   for (const child of Object.values(value)) deepFreeze(child);
   return value;
@@ -83,7 +96,11 @@ function safeIdentifier(value, name) {
 
 export function mintCorrelationId(uuid = randomUUID) {
   const value = String(uuid()).toLowerCase();
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value)) {
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+      value,
+    )
+  ) {
     throw new TypeError("The UUID source returned an invalid value.");
   }
   return `${CORRELATION_PREFIX}${value}`;
@@ -109,8 +126,14 @@ export function buildCorrelationContext(input = {}, uuid = randomUUID) {
   };
   const appRequestId = safeIdentifier(input.app_request_id, "app_request_id");
   const appRunId = safeIdentifier(input.app_run_id, "app_run_id");
-  const gatewayRequestId = safeIdentifier(input.gateway_request_id, "gateway_request_id");
-  const mlflowTraceId = safeIdentifier(input.mlflow_trace_id, "mlflow_trace_id");
+  const gatewayRequestId = safeIdentifier(
+    input.gateway_request_id,
+    "gateway_request_id",
+  );
+  const mlflowTraceId = safeIdentifier(
+    input.mlflow_trace_id,
+    "mlflow_trace_id",
+  );
   if (appRequestId) context.app.request_id = appRequestId;
   if (appRunId) context.app.run_id = appRunId;
   if (gatewayRequestId) context.gateway.request_id = gatewayRequestId;
@@ -123,9 +146,14 @@ export function classifyPayload(key, value) {
   for (const [classification, pattern] of KEY_CLASSES) {
     if (pattern.test(name)) return classification;
   }
-  if (typeof value === "string" && SECRET_TEXT.some((pattern) => pattern.test(value))) return "secret";
+  if (
+    typeof value === "string" &&
+    SECRET_TEXT.some((pattern) => pattern.test(value))
+  )
+    return "secret";
   if (!SAFE_METADATA_KEYS.has(name)) return "unknown";
-  if (value === null || ["string", "number", "boolean"].includes(typeof value)) return "safe_metadata";
+  if (value === null || ["string", "number", "boolean"].includes(typeof value))
+    return "safe_metadata";
   return "unsafe_value";
 }
 
@@ -153,7 +181,8 @@ export function safeMetadata(input, options = {}) {
   const allowed = new Set(options.allowedKeys ?? SAFE_METADATA_KEYS);
   const output = {};
   for (const [key, value] of Object.entries(input)) {
-    if (!allowed.has(key) || classifyPayload(key, value) !== "safe_metadata") continue;
+    if (!allowed.has(key) || classifyPayload(key, value) !== "safe_metadata")
+      continue;
     const redacted = typeof value === "string" ? redactText(value) : value;
     output[key] = redacted;
   }
@@ -163,14 +192,17 @@ export function safeMetadata(input, options = {}) {
 
 function firstUnsafe(value, classes, path = "$", seen = new WeakSet()) {
   if (typeof value === "string") {
-    return SECRET_TEXT.some((pattern) => pattern.test(value)) ? { path, classification: "secret" } : null;
+    return SECRET_TEXT.some((pattern) => pattern.test(value))
+      ? { path, classification: "secret" }
+      : null;
   }
   if (value === null || typeof value !== "object") return null;
   if (seen.has(value)) return null;
   seen.add(value);
   for (const [key, item] of Object.entries(value)) {
     const classification = classifyPayload(key, item);
-    if (classes.has(classification)) return { path: `${path}.${key}`, classification };
+    if (classes.has(classification))
+      return { path: `${path}.${key}`, classification };
     const nested = firstUnsafe(item, classes, `${path}.${key}`, seen);
     if (nested) return nested;
   }
@@ -192,19 +224,22 @@ export function containsSecrets(value) {
 
 export function assertNoSecrets(value) {
   const unsafe = firstUnsafe(value, SECRET_CLASSES);
-  if (unsafe) throw new UnsafeTelemetryError(unsafe.classification, unsafe.path);
+  if (unsafe)
+    throw new UnsafeTelemetryError(unsafe.classification, unsafe.path);
   return value;
 }
 
 export function assertSafeTelemetryPayload(value) {
   const unsafe = firstUnsafe(value, FORBIDDEN_TELEMETRY_CLASSES);
-  if (unsafe) throw new UnsafeTelemetryError(unsafe.classification, unsafe.path);
+  if (unsafe)
+    throw new UnsafeTelemetryError(unsafe.classification, unsafe.path);
   return value;
 }
 
 function validAuditEvent(event) {
   const validation = validateContract("audit-event", event);
-  if (!validation.valid) throw new TypeError(`Invalid AuditEvent: ${validation.errors.join("; ")}`);
+  if (!validation.valid)
+    throw new TypeError(`Invalid AuditEvent: ${validation.errors.join("; ")}`);
   return event;
 }
 
@@ -228,7 +263,9 @@ export function createAuditEvent(input, options = {}) {
     target_ref: input?.target_ref,
     outcome: input?.outcome,
     correlation_id: input?.correlation_id,
-    ...(input?.details ? { details: safeMetadata(input.details, input.metadataOptions) } : {}),
+    ...(input?.details
+      ? { details: safeMetadata(input.details, input.metadataOptions) }
+      : {}),
   };
   validAuditEvent(event);
   assertSafeTelemetryPayload(event.details ?? {});

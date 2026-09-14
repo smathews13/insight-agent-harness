@@ -351,7 +351,15 @@ class SecurityGateTest(unittest.TestCase):
             ],
         )
 
+        informational = run(
+            self.root, "dependency", "--mode", "fast", "--advisory", str(advisory)
+        )
         vulnerable = run(self.root, "dependency", "--mode", "strict", "--advisory", str(advisory))
+        self.assertEqual(informational.returncode, 0)
+        informational_report = json.loads(informational.stdout)
+        self.assertEqual(informational_report["status"], "unverified")
+        self.assertEqual(len(informational_report["blocking_vulnerabilities"]), 1)
+        self.assertIn("UNVERIFIED", informational_report["warning"])
         self.assertEqual(vulnerable.returncode, 1)
         self.assertEqual(json.loads(vulnerable.stdout)["status"], "blocked")
 
@@ -371,8 +379,40 @@ class SecurityGateTest(unittest.TestCase):
 
         self.assertEqual(fast.returncode, 0)
         self.assertEqual(json.loads(fast.stdout)["status"], "unverified")
+        self.assertIn("UNVERIFIED", json.loads(fast.stdout)["warning"])
         self.assertEqual(strict.returncode, 2)
         self.assertEqual(json.loads(strict.stdout)["status"], "unverified")
+
+    def test_missing_or_mismatched_advisory_is_informational_unless_strict(self) -> None:
+        inventory = self.write_dependency_inputs()
+        missing = self.root / "missing-advisory.json"
+
+        missing_fast = run(
+            self.root, "dependency", "--mode", "fast", "--advisory", str(missing)
+        )
+        missing_strict = run(self.root, "dependency", "--strict", "--advisory", str(missing))
+
+        self.assertEqual(missing_fast.returncode, 0, missing_fast.stdout + missing_fast.stderr)
+        missing_report = json.loads(missing_fast.stdout)
+        self.assertEqual(missing_report["status"], "unverified")
+        self.assertIn("UNVERIFIED", missing_report["warning"])
+        self.assertIn("is missing", missing_report["advisory"]["validation_error"])
+        self.assertEqual(missing_strict.returncode, 2)
+
+        advisory = self.write_advisory("0" * 64)
+        mismatched_fast = run(
+            self.root, "dependency", "--mode", "fast", "--advisory", str(advisory)
+        )
+        mismatched_strict = run(
+            self.root, "dependency", "--strict", "--advisory", str(advisory)
+        )
+
+        self.assertEqual(mismatched_fast.returncode, 0)
+        mismatched_report = json.loads(mismatched_fast.stdout)
+        self.assertIn("does not match", mismatched_report["advisory"]["validation_error"])
+        self.assertIn("UNVERIFIED", mismatched_report["warning"])
+        self.assertEqual(mismatched_strict.returncode, 2)
+        self.assertNotEqual(inventory, "0" * 64)
 
     def test_dependency_evidence_requires_trusted_verifier_and_rejects_self_rehashed_tamper(
         self,
@@ -458,7 +498,7 @@ class SecurityGateTest(unittest.TestCase):
         self.assertEqual(rejected.returncode, 1)
         self.assertEqual(json.loads(rejected.stdout)["advisory"]["verifier_exit_code"], 1)
 
-    def test_dependency_severity_and_status_must_be_explicit(self) -> None:
+    def test_malformed_dependency_evidence_is_visible_and_strict_only(self) -> None:
         inventory = self.write_dependency_inputs()
         advisory = self.write_advisory(
             inventory,
@@ -469,8 +509,11 @@ class SecurityGateTest(unittest.TestCase):
             self.root, "dependency", "--mode", "fast", "--advisory", str(advisory)
         )
 
-        self.assertEqual(missing_severity.returncode, 2)
-        self.assertIn("severity is missing", missing_severity.stdout)
+        self.assertEqual(missing_severity.returncode, 0)
+        missing_report = json.loads(missing_severity.stdout)
+        self.assertEqual(missing_report["status"], "unverified")
+        self.assertIn("severity is missing", missing_report["advisory"]["validation_error"])
+        self.assertIn("UNVERIFIED", missing_report["warning"])
 
         advisory = self.write_advisory(
             inventory,
@@ -486,8 +529,13 @@ class SecurityGateTest(unittest.TestCase):
         unknown_severity = run(
             self.root, "dependency", "--mode", "fast", "--advisory", str(advisory)
         )
-        self.assertEqual(unknown_severity.returncode, 2)
-        self.assertIn("invalid severity", unknown_severity.stdout)
+        strict = run(self.root, "dependency", "--strict", "--advisory", str(advisory))
+        self.assertEqual(unknown_severity.returncode, 0)
+        self.assertIn(
+            "invalid severity",
+            json.loads(unknown_severity.stdout)["advisory"]["validation_error"],
+        )
+        self.assertEqual(strict.returncode, 2)
 
     def test_dependency_inventory_binds_workspace_manifests(self) -> None:
         self.write_dependency_inputs()

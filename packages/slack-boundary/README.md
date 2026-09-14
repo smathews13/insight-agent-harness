@@ -31,7 +31,7 @@ events, unverified ingress, stale kill-switch state, and arbitrary persistence
 fields.
 
 The package has no Lakebase implementation. If a later production implementation
-needs these records, it must reserve app migration **46** and create only the
+needs these records, it must reserve app migration **47** and create only the
 safe metadata fields represented here. Token values and Slack message bodies
 must not be columns, JSON payloads, logs, traces, or evidence extensions.
 

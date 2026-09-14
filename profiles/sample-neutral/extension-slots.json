@@ -44,7 +44,7 @@
   "migrations": {
     "ref": "extension:migrations/sample-neutral",
     "migration_set_ref": "migrations:sample-neutral",
-    "first_migration_version": 46
+    "first_migration_version": 48
   },
   "settings": {
     "ref": "extension:settings/sample-neutral",

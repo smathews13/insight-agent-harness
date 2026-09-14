@@ -23,9 +23,13 @@ compiled into its distribution and selected only by an opaque manifest ref.
   conversations, attachments, feedback, historical artifact revisions, and
   audit. MLflow traces and Unity Catalog external resources require compiled
   adapters; absence resolves to `RETENTION_ADAPTER_NOT_INSTALLED` and blocks.
+  The production scheduler is inert unless
+  `INSIGHT_AGENT_RETENTION_ENABLED=true`; deletion additionally requires an
+  explicit `INSIGHT_AGENT_RETENTION_LEGAL_HOLD_ACTIVE=false`, and the kill
+  switch is rechecked immediately before each batch.
 - **Migrations:** downstream ids, versions, checksums, owners, and committed
-  profile refs are unique and verified. Product versions begin at 46. The
-  registry appends to an immutable core 1–45 and rejects statements that write
+  profile refs are unique and verified. Product versions begin at 48. The
+  registry appends to an immutable core 1–47 and rejects statements that write
   the upstream migration ledger.
 - **Exports:** binary adapters use export-core's fixed threat contract and
   must exactly match the manifest egress and redaction policy refs. Only

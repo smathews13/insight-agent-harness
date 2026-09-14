@@ -2,8 +2,9 @@
 """Deterministic local security checks and strict external-evidence adapters.
 
 The local SAST rules are intentionally narrow heuristics, not a claim of complete
-static analysis. Final release additionally requires fresh dependency evidence and
-an independently verified upstream attestation.
+static analysis. Dependency and attestation evidence is informational by default;
+the explicit strict security-review mode requires fresh, independently verified
+evidence.
 """
 
 from __future__ import annotations
@@ -807,38 +808,46 @@ def dependency_report(
     inventory = dependency_inventory_sha256(args.root)
     pins = npm_pin_findings(args.root)
     advisory_path = resolve(args.root, args.advisory)
-    advisory = load_object(advisory_path, "dependency advisory input")
-    verified_document(advisory, "dependency advisory input")
-    scanner = advisory.get("scanner")
-    if scanner not in set(policy["approved_external_scanners"]):
-        raise GateError(f"dependency advisory scanner is not approved: {scanner!r}")
-    if advisory.get("inventory_sha256") != inventory:
-        raise GateError("dependency advisory inventory_sha256 does not match current lock inputs")
-    generated_at = parse_time(advisory.get("generated_at"), "advisory generated_at")
-    age_seconds = (now - generated_at).total_seconds()
-    fresh = 0 <= age_seconds <= policy["advisory_max_age_days"] * 86400
-    status_claim_verified = advisory.get("status") == "verified"
-    vulnerabilities = advisory.get("vulnerabilities")
-    if not isinstance(vulnerabilities, list):
-        raise GateError("dependency advisory vulnerabilities must be an array")
+    advisory: dict[str, Any] = {}
+    evidence_error = ""
+    fresh = False
+    scanner: Any = None
+    status_claim_verified = False
     blocking: list[dict[str, Any]] = []
-    for index, vulnerability in enumerate(vulnerabilities):
-        if not isinstance(vulnerability, dict):
-            raise GateError(f"dependency vulnerability {index} must be an object")
-        severity_value = vulnerability.get("severity")
-        status_value = vulnerability.get("status")
-        if not isinstance(severity_value, str) or not severity_value:
-            raise GateError(f"dependency vulnerability {index} severity is missing")
-        if not isinstance(status_value, str) or not status_value:
-            raise GateError(f"dependency vulnerability {index} status is missing")
-        severity = severity_value.lower()
-        status = status_value.lower()
-        if severity not in SEVERITY_ORDER or severity == "unknown":
-            raise GateError(f"dependency vulnerability {index} has an invalid severity")
-        if status not in VULNERABILITY_STATUSES:
-            raise GateError(f"dependency vulnerability {index} has an invalid status")
-        if severity in {"critical", "high"} and status == "open":
-            blocking.append(vulnerability)
+    try:
+        advisory = load_object(advisory_path, "dependency advisory input")
+        verified_document(advisory, "dependency advisory input")
+        scanner = advisory.get("scanner")
+        if scanner not in set(policy["approved_external_scanners"]):
+            raise GateError(f"dependency advisory scanner is not approved: {scanner!r}")
+        if advisory.get("inventory_sha256") != inventory:
+            raise GateError("dependency advisory inventory_sha256 does not match current lock inputs")
+        generated_at = parse_time(advisory.get("generated_at"), "advisory generated_at")
+        age_seconds = (now - generated_at).total_seconds()
+        fresh = 0 <= age_seconds <= policy["advisory_max_age_days"] * 86400
+        status_claim_verified = advisory.get("status") == "verified"
+        vulnerabilities = advisory.get("vulnerabilities")
+        if not isinstance(vulnerabilities, list):
+            raise GateError("dependency advisory vulnerabilities must be an array")
+        for index, vulnerability in enumerate(vulnerabilities):
+            if not isinstance(vulnerability, dict):
+                raise GateError(f"dependency vulnerability {index} must be an object")
+            severity_value = vulnerability.get("severity")
+            status_value = vulnerability.get("status")
+            if not isinstance(severity_value, str) or not severity_value:
+                raise GateError(f"dependency vulnerability {index} severity is missing")
+            if not isinstance(status_value, str) or not status_value:
+                raise GateError(f"dependency vulnerability {index} status is missing")
+            severity = severity_value.lower()
+            status = status_value.lower()
+            if severity not in SEVERITY_ORDER or severity == "unknown":
+                raise GateError(f"dependency vulnerability {index} has an invalid severity")
+            if status not in VULNERABILITY_STATUSES:
+                raise GateError(f"dependency vulnerability {index} has an invalid status")
+            if severity in {"critical", "high"} and status == "open":
+                blocking.append(vulnerability)
+    except GateError as exc:
+        evidence_error = str(exc)
 
     raw_verifier = args.advisory_verifier_json or os.environ.get(
         "SECURITY_DEPENDENCY_ADVISORY_VERIFIER_JSON", ""
@@ -847,7 +856,7 @@ def dependency_report(
         "SECURITY_DEPENDENCY_ADVISORY_TRUST_ROOT", ""
     )
     verifier_exit_code: int | None = None
-    if args.mode == "strict" and raw_verifier and raw_trust_root:
+    if args.mode == "strict" and not evidence_error and raw_verifier and raw_trust_root:
         trust_root = resolve(args.root, raw_trust_root)
         read_regular_file(trust_root, "dependency advisory trust root")
         argv = verifier_argv(
@@ -865,13 +874,40 @@ def dependency_report(
 
     state = "unverified"
     exit_code = 0
-    reason = "external verification is final-only"
-    if pins or blocking:
+    warning = ""
+    reason = ""
+    if args.mode == "fast":
+        if evidence_error:
+            warning = (
+                "UNVERIFIED: dependency advisory evidence is unavailable or invalid: "
+                f"{evidence_error}. Informational mode does not block; use --strict "
+                "for fail-closed verification."
+            )
+        elif blocking:
+            warning = (
+                "UNVERIFIED: advisory evidence reports open high/critical vulnerabilities, "
+                "but external verification is strict-only. Informational mode does not block; "
+                "use --strict for fail-closed verification."
+            )
+        else:
+            warning = (
+                "UNVERIFIED: dependency advisory evidence is informational until a trusted "
+                "verifier runs. Use --strict for fail-closed verification."
+            )
+        reason = warning
+    if pins:
         state = "blocked"
         exit_code = 1
-        reason = "mutable npm dependencies or open high/critical vulnerabilities"
+        reason = "mutable npm dependencies violate the deterministic local dependency policy"
     elif args.mode == "strict":
-        if not raw_verifier:
+        if evidence_error:
+            exit_code = 2
+            reason = evidence_error
+        elif blocking:
+            state = "blocked"
+            exit_code = 1
+            reason = "verified advisory reports open high/critical vulnerabilities"
+        elif not raw_verifier:
             exit_code = 2
             reason = "dependency advisory verifier is not configured"
         elif not raw_trust_root:
@@ -894,6 +930,7 @@ def dependency_report(
             "scanner": scanner,
             "status_claim_verified": status_claim_verified,
             "trust_root_configured": bool(raw_trust_root),
+            "validation_error": evidence_error or None,
             "verifier_configured": bool(raw_verifier),
             "verifier_exit_code": verifier_exit_code,
         },
@@ -908,6 +945,7 @@ def dependency_report(
         "reason": reason,
         "schema_version": SCHEMA_VERSION,
         "status": state,
+        "warning": warning or None,
     }
     return report, exit_code
 
@@ -1030,6 +1068,11 @@ def parser() -> argparse.ArgumentParser:
     )
     dependency.add_argument("--advisory-verifier-json", default="")
     dependency.add_argument("--advisory-trust-root", default="")
+    dependency.add_argument(
+        "--strict",
+        action="store_true",
+        help="fail closed on unavailable, invalid, stale, or unverified advisory evidence",
+    )
     attestation = subparsers.add_parser("attestation", parents=[common])
     attestation.add_argument("--mode", choices=("fast", "strict"), default="fast")
     attestation.add_argument("--attestation", default="")
@@ -1060,6 +1103,8 @@ def main() -> int:
         if args.command == "sast":
             report, status = sast_report(args, policy, now)
         elif args.command == "dependency":
+            if args.strict:
+                args.mode = "strict"
             report, status = dependency_report(args, policy, now)
         elif args.command == "attestation":
             report, status = attestation_report(args, policy, now)
