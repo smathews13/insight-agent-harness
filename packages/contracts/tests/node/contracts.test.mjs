@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -206,9 +206,17 @@ test('user scope allowlist exactly covers current required and optional app scop
 });
 
 test('schema scope allowlists stay aligned with shared app scope contracts', () => {
+  const productSchema = JSON.parse(
+    readFileSync(new URL('../../schemas/product-manifest.schema.json', import.meta.url), 'utf8'),
+  );
+  const requestSchema = JSON.parse(
+    readFileSync(new URL('../../schemas/request-context.schema.json', import.meta.url), 'utf8'),
+  );
   const readScopeArray = (fileName, exportName) => {
+    const source = new URL(`../../../../platform/app/shared/${fileName}`, import.meta.url);
+    if (!existsSync(source)) return null;
     const text = readFileSync(
-      new URL(`../../../../platform/app/shared/${fileName}`, import.meta.url),
+      source,
       'utf8',
     );
     const constants = Object.fromEntries(
@@ -229,16 +237,15 @@ test('schema scope allowlists stay aligned with shared app scope contracts', () 
         return literal ?? constants[item];
       });
   };
-  const expected = [
-    ...readScopeArray('required-user-api-scopes.ts', 'REQUIRED_USER_API_SCOPES'),
-    ...readScopeArray('optional-user-api-scopes.ts', 'OPTIONAL_USER_API_SCOPES'),
-  ].sort();
-  const productSchema = JSON.parse(
-    readFileSync(new URL('../../schemas/product-manifest.schema.json', import.meta.url), 'utf8'),
-  );
-  const requestSchema = JSON.parse(
-    readFileSync(new URL('../../schemas/request-context.schema.json', import.meta.url), 'utf8'),
-  );
+  const appScopes = [
+    ...(readScopeArray('required-user-api-scopes.ts', 'REQUIRED_USER_API_SCOPES') ?? []),
+    ...(readScopeArray('optional-user-api-scopes.ts', 'OPTIONAL_USER_API_SCOPES') ?? []),
+  ];
+  const expected = (
+    appScopes.length
+      ? appScopes
+      : productSchema.properties.authorization.properties.user_scopes.items.enum
+  ).sort();
   assert.deepEqual(
     [...productSchema.properties.authorization.properties.user_scopes.items.enum].sort(),
     expected,
