@@ -57,6 +57,7 @@ harness.
 - [ProductManifest extensions](docs/customization/product-extensions.md)
 - [Operational extension seams](docs/customization/operational-extension-seams.md)
 - [Canonical artifacts and exports](docs/canonical-artifacts-and-exports.md)
+- [Slack setup](docs/slack-setup.md)
 
 ## Support and security
 
