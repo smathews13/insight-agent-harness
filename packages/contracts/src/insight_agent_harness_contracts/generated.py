@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from typing import Any, Literal, TypedDict
 
-SCHEMA_SET_SHA256 = "4e7c32ebc3039ea945f3198839f16cbc9518e35b7f20732e0eb6ac660d8c3226"
+SCHEMA_SET_SHA256 = "345df13ee989a68cfa29227bf0ed7249e0656bdc729015c64590fa26a608fb6b"
 SCHEMA_SHA256 = {
     "audit-event.schema.json": "13bec985a09d96dcdfc8ee78784917ed7bde1634e768e4cc05f4400b00871c91",
     "blocked-dependency.schema.json": "799e85b8b464e0d9b9098f42eaddfc2628b955b8032f70f71cef49573dc73ccf",
     "error-envelope.schema.json": "db94171c9baee58ade3cee9d3624330e618391c3845b426356a6b8e55cb818b9",
     "evidence-ref.schema.json": "3428cf971bbf22837ef58ee3b4547b22e0b3abf1088e1d592795d432d57faf59",
-    "product-manifest.schema.json": "ca1c716178ad78a148c82ff9c5fa27cb17ea29ae63d77c0a9c096aeffdaece3f",
+    "product-manifest.schema.json": "661ff58045ece48b4276ecffeb004a3d412f932b19682a0c91d09c607db69e61",
     "release-key-registry.schema.json": "5a7085ddc8a14bdba82233ba7a70932aedd85d6bcba2c155de470a60ff3df8dc",
     "release-manifest.schema.json": "e6a130f86b003901b3f4feb47626caf1e6d4072cac9ad2093ada0c9e954e5726",
-    "request-context.schema.json": "23d529915827db51b9e59c7377c33799edce31ef864508d765d34414a2769c7c",
+    "request-context.schema.json": "438ff9e7462710a6a0a9a2af554c6d1f5fca57f44749d0bf4abdf80b6fced7f6",
     "run-envelope.schema.json": "4cc4374f2f4fbb47858f0e98ec8583dbbdd1ea416c6c16e559a952333e83ea6c",
 }
 
@@ -255,8 +255,6 @@ class ProductManifestAuthorization(_ProductManifestAuthorizationOptional):
             "postgres",
             "serving.serving-endpoints",
             "sql",
-            "vectorsearch.vector-search-endpoints:read",
-            "vectorsearch.vector-search-indexes:read",
             "workspace.workspace:read",
         ]
     ]
@@ -542,8 +540,6 @@ class _RequestContextAuthorizationOptional(TypedDict, total=False):
             "postgres",
             "serving.serving-endpoints",
             "sql",
-            "vectorsearch.vector-search-endpoints:read",
-            "vectorsearch.vector-search-indexes:read",
             "workspace.workspace:read",
         ]
     ]

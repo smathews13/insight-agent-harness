@@ -196,8 +196,6 @@ test('user scope allowlist exactly covers current required and optional app scop
     'postgres',
     'serving.serving-endpoints',
     'sql',
-    'vectorsearch.vector-search-endpoints:read',
-    'vectorsearch.vector-search-indexes:read',
     'workspace.workspace:read',
   ];
   assert.equal(validateContract('request-context', request).valid, true);

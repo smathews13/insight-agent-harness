@@ -402,8 +402,6 @@
               "postgres",
               "serving.serving-endpoints",
               "sql",
-              "vectorsearch.vector-search-endpoints:read",
-              "vectorsearch.vector-search-indexes:read",
               "workspace.workspace:read"
             ]
           }

@@ -5,6 +5,11 @@
 *.pem
 *.key
 
+# Databricks bundle state and per-target variable overrides are local deployment
+# state. Keep the root rule here: a public clone does not carry the ignored
+# `.databricks/.gitignore` file that the CLI may create on one operator's machine.
+/.databricks/
+
 # Dependencies
 node_modules/
 node_modules.partial-harness/

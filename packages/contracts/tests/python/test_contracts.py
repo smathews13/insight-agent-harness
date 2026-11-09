@@ -196,8 +196,6 @@ class ContractTests(unittest.TestCase):
             "postgres",
             "serving.serving-endpoints",
             "sql",
-            "vectorsearch.vector-search-endpoints:read",
-            "vectorsearch.vector-search-indexes:read",
             "workspace.workspace:read",
         ]
         self.assertTrue(validate_contract("request-context", request)["valid"])

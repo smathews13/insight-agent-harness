@@ -124,17 +124,6 @@
     {
       "approved": true,
       "expires_on": "2026-12-31",
-      "fingerprint": "24a05ef983ebcfeb60b61d60f7d83af4fee439b8584202203a92217a9e14972a",
-      "owner": "security-maintainers",
-      "path": "platform/app/scripts/grant-app-db-access.mjs",
-      "reason": "Existing identifier comes from a repository-defined constant or validated internal name; migrate to an approved helper before expiry.",
-      "review_reference": "EPIC-00-completion-audit",
-      "reviewed_by": "release-engineering",
-      "rule_id": "SAST-SQL-IDENTIFIER-INTERPOLATION"
-    },
-    {
-      "approved": true,
-      "expires_on": "2026-12-31",
       "fingerprint": "a9ecaa8b7c57e46331afb1f0267fd4fcf4ffaa51c64e48f960791eec74b8131c",
       "owner": "security-maintainers",
       "path": "platform/app/scripts/migrate-app-schema-data.mjs",
@@ -441,6 +430,6 @@
       "rule_id": "SAST-SQL-IDENTIFIER-INTERPOLATION"
     }
   ],
-  "entries_sha256": "7a84866d1a5e5f782f1e66fc5872afbbdfdd196aec0d672bbb9cde90e71d719d",
+  "entries_sha256": "10b30875f5c268b8ef871b32e22c5a3f2c23d30144f50b593969a02244c4bc07",
   "schema_version": "1.0"
 }
